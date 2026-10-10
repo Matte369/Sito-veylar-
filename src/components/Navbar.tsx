@@ -1,45 +1,34 @@
-import Reveal from './Reveal'
 import Logo from './Logo'
 import { mailto } from '../config'
 
-type NavLink = { label: string; href: string; sup?: string }
-
-const links: NavLink[] = [
-  { label: 'Vehicles', href: mailto('VEYLAR Vehicles — Information Request'), sup: '01' },
+const links = [
   { label: 'Technology', href: '#technology' },
-  { label: 'About', href: '#about' },
-  { label: 'Contact', href: mailto('Contact VEYLAR') },
+  { label: 'Roadmap', href: '#roadmap' },
+  { label: 'Founder', href: '#founder' },
 ]
 
 export default function Navbar() {
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-white/15">
-      <nav className="flex items-center justify-between px-5 py-4 sm:px-8 md:px-12">
-        <Reveal delay={0}>
-          <a href="#about" aria-label="VEYLAR — home" className="flex items-center">
-            <Logo />
-          </a>
-        </Reveal>
-
-        <ul className="hidden items-center gap-8 md:flex lg:gap-10">
-          {links.map((link, i) => (
-            <Reveal as="li" key={link.label} delay={100 + i * 100}>
-              <a href={link.href} className="text-sm text-white/85 transition-colors duration-300 hover:text-white">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-ink/10 bg-paper/70 backdrop-blur-md">
+      <nav className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-5 sm:px-8 md:px-12">
+        <a href="#top" aria-label="VEYLAR, back to top" className="flex items-center">
+          <Logo />
+        </a>
+        <ul className="hidden items-center gap-10 md:flex">
+          {links.map((link) => (
+            <li key={link.label}>
+              <a href={link.href} className="text-sm text-graphite transition-colors duration-300 hover:text-ink">
                 {link.label}
-                {link.sup && <sup className="ml-0.5 font-mono text-[10px] text-white/60">{link.sup}</sup>}
               </a>
-            </Reveal>
+            </li>
           ))}
         </ul>
-
-        <Reveal delay={500}>
-          <a
-            href="#technology"
-            className="inline-block rounded-md border border-white/20 bg-white/15 px-4 py-2 text-xs backdrop-blur-md transition-colors duration-300 hover:bg-white/25 sm:px-5 sm:text-sm"
-          >
-            Discover VEYLAR
-          </a>
-        </Reveal>
+        <a
+          href={mailto('VEYLAR enquiry')}
+          className="rounded-full bg-ink px-5 py-2 text-sm font-medium text-paper transition-transform duration-300 hover:bg-graphite active:scale-[0.98]"
+        >
+          Contact
+        </a>
       </nav>
     </header>
   )

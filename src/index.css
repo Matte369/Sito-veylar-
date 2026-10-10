@@ -2,15 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: light;
+}
+
 html,
 body {
-  background: #0a0a0a;
-  color: #fff;
-  font-family: 'Inter', system-ui, sans-serif;
+  background: #eceef0;
+  color: #15171a;
+  font-family: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(217, 83, 30, 0.22);
+}
+
+@layer utilities {
+  /* Archivo's width axis: expanded cut for display type. */
+  .font-wide {
+    font-stretch: 118%;
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Studio sweep behind the car. */
+.studio {
+  background:
+    radial-gradient(120% 80% at 62% 45%, #fafbfb 0%, #eef0f2 45%, #dfe2e6 100%);
+}
+
+:focus-visible {
+  outline: 2px solid #d9531e;
+  outline-offset: 3px;
 }

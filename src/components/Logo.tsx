@@ -2,16 +2,15 @@ import { useState } from 'react'
 import { LOGO_URL } from '../config'
 
 /**
- * Official VEYLAR logo (metallic silver V symbol + wordmark), served from
- * /public. The raster asset is never redrawn; if it is missing, only the
- * accessible name is shown until the file is added.
+ * Official VEYLAR logo, served from /public. The asset is never redrawn;
+ * until the file is added, a plain wordmark holds its place.
  */
 export default function Logo() {
   const [failed, setFailed] = useState(false)
 
   if (failed) {
     return (
-      <span className="text-lg font-medium tracking-tight text-white sm:text-xl" role="img" aria-label="VEYLAR">
+      <span className="font-wide text-base font-semibold tracking-[0.22em] text-ink" role="img" aria-label="VEYLAR">
         VEYLAR
       </span>
     )
@@ -21,7 +20,7 @@ export default function Logo() {
     <img
       src={LOGO_URL}
       alt="VEYLAR"
-      className="h-7 w-auto select-none object-contain sm:h-8"
+      className="h-7 w-auto select-none object-contain"
       draggable={false}
       onError={() => setFailed(true)}
     />
