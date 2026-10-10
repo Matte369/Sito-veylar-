@@ -1,81 +1,72 @@
 import * as THREE from 'three'
 import { ACCENT, buildCar, energyPaths, type Part, type PartKey } from './car'
 
+export type ChapterId = 'hero' | 'platform' | 'drive' | 'hydrogen' | 'power' | 'further'
+export type LabelKey =
+  | 'body'
+  | 'frame'
+  | 'batteryModules'
+  | 'motorF'
+  | 'motorR'
+  | 'genUnit'
+  | 'fuelCell'
+  | 'ethanolTank'
+  | 'waterTank'
+  | 'power'
+  | 'battery'
+
 export type Chapter = {
-  id: string
-  title: string
-  body: string
+  id: ChapterId
   /** Scroll progress range (0-1) where the chapter is on screen. */
   range: [number, number]
   focus: PartKey[]
-  labels: { part: PartKey; text: string }[]
+  /** Component labels: which part the leader line points at, and which text key it shows. */
+  labels: { part: PartKey; text: LabelKey }[]
 }
 
 export const CHAPTERS: Chapter[] = [
-  {
-    id: 'hero',
-    title: 'Energy, reimagined.',
-    body: 'An Italian electric car platform that generates its own energy on board, from bioethanol and water.',
-    range: [0, 0.09],
-    focus: [],
-    labels: [],
-  },
+  { id: 'hero', range: [0, 0.09], focus: [], labels: [] },
   {
     id: 'platform',
-    title: 'Built from the platform up.',
-    body: 'Under the body sits a flat electric platform. Every part of the energy system is designed into it from the start.',
     range: [0.12, 0.27],
     focus: [],
     labels: [
-      { part: 'body', text: 'Body' },
-      { part: 'frame', text: 'Platform' },
+      { part: 'body', text: 'body' },
+      { part: 'frame', text: 'frame' },
     ],
   },
   {
     id: 'drive',
-    title: 'Battery and electric drive.',
-    body: 'A low battery pack and an electric motor on each axle give balance and instant response. The battery works together with an onboard energy source.',
     range: [0.3, 0.45],
     focus: ['batteryModules', 'motorF', 'motorR'],
     labels: [
-      { part: 'batteryModules', text: 'Battery pack' },
-      { part: 'motorF', text: 'Front e-motor' },
-      { part: 'motorR', text: 'Rear e-motor' },
+      { part: 'batteryModules', text: 'batteryModules' },
+      { part: 'motorF', text: 'motorF' },
+      { part: 'motorR', text: 'motorR' },
     ],
   },
   {
     id: 'hydrogen',
-    title: 'Hydrogen, made on board.',
-    body: 'A compact unit generates hydrogen from bioethanol and water. A fuel cell turns it into electricity while you drive.',
     range: [0.48, 0.62],
     focus: ['genUnit', 'fuelCell', 'ethanolTank', 'waterTank'],
     labels: [
-      { part: 'genUnit', text: 'Hydrogen generation' },
-      { part: 'fuelCell', text: 'Fuel cell' },
-      { part: 'ethanolTank', text: 'Bioethanol' },
-      { part: 'waterTank', text: 'Water' },
+      { part: 'genUnit', text: 'genUnit' },
+      { part: 'fuelCell', text: 'fuelCell' },
+      { part: 'ethanolTank', text: 'ethanolTank' },
+      { part: 'waterTank', text: 'waterTank' },
     ],
   },
   {
     id: 'power',
-    title: 'Power, managed intelligently.',
-    body: 'Control software balances fuel cell output and battery charge moment by moment, adapting to the way you drive.',
     range: [0.65, 0.79],
     focus: ['power'],
     labels: [
-      { part: 'power', text: 'Power electronics' },
-      { part: 'batteryModules', text: 'Battery' },
-      { part: 'fuelCell', text: 'Fuel cell' },
+      { part: 'power', text: 'power' },
+      { part: 'batteryModules', text: 'battery' },
+      { part: 'fuelCell', text: 'fuelCell' },
     ],
   },
-  {
-    id: 'further',
-    title: 'Freedom to go further.',
-    body: 'A platform designed for extended range and a more flexible relationship with energy. This is the car VEYLAR is developing.',
-    range: [0.9, 1.01],
-    focus: [],
-    labels: [],
-  },
+  { id: 'further', range: [0.9, 1.01], focus: [], labels: [] },
 ]
 
 const smooth = (a: number, b: number, x: number) => {
@@ -95,7 +86,7 @@ function studioEnvironment() {
   const env = new THREE.Scene()
   const room = new THREE.Mesh(
     new THREE.BoxGeometry(30, 14, 30),
-    new THREE.MeshBasicMaterial({ color: new THREE.Color('#8e939a'), side: THREE.BackSide }),
+    new THREE.MeshBasicMaterial({ color: new THREE.Color('#3b3f45'), side: THREE.BackSide }),
   )
   room.position.y = 5
   env.add(room)
@@ -108,12 +99,12 @@ function studioEnvironment() {
     m.rotation.set(...rot)
     env.add(m)
   }
-  panel(14, 3.5, 6, [0, 11.5, 0], [Math.PI / 2, 0, 0]) // overhead softbox, long highlight on the roof and hood
+  panel(14, 4, 9, [0, 11.5, 0], [Math.PI / 2, 0, 0]) // overhead softbox, long highlight on the roof and hood
   panel(10, 2.2, 3.2, [0, 4, -14.5], [0, 0, 0]) // back strip
-  panel(10, 2.2, 3.2, [0, 4, 14.5], [0, Math.PI, 0]) // front strip, the line along the flanks
+  panel(16, 1.6, 6, [0, 3, 14.5], [0, Math.PI, 0]) // front strip, the line along the flanks
   panel(2.2, 8, 2.4, [14.5, 4, 0], [0, -Math.PI / 2, 0])
   panel(2.2, 8, 2.4, [-14.5, 4, 0], [0, Math.PI / 2, 0])
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.MeshBasicMaterial({ color: '#c7cbd0' }))
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.MeshBasicMaterial({ color: '#b9bdc2' }))
   floor.rotation.x = -Math.PI / 2
   floor.position.y = -1.9
   env.add(floor)

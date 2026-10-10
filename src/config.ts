@@ -15,11 +15,3 @@ export const REFUEL_POINTS = 21000
 
 export const mailto = (subject?: string) =>
   `mailto:${CONTACT_EMAIL}${subject ? `?subject=${encodeURIComponent(subject)}` : ''}`
-
-export const eur = (n: number, digits = 0) =>
-  new Intl.NumberFormat('en-IE', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  }).format(n)

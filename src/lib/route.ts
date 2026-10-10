@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { scrollToTarget } from './motion'
 
 export type Route = 'home' | 'support' | 'contact'
 
@@ -21,15 +22,15 @@ export function useRoute() {
       const next = read()
       setRoute(next)
       if (next !== 'home') {
-        window.scrollTo({ top: 0 })
+        scrollToTarget(0, { immediate: true })
         return
       }
       // Coming back from a page to a home section: wait for the home view to mount.
       const id = window.location.hash.replace('#', '')
       requestAnimationFrame(() => {
         const el = id ? document.getElementById(id) : null
-        if (el) el.scrollIntoView()
-        else if (!id || id === 'top') window.scrollTo({ top: 0 })
+        if (el && id !== 'top') scrollToTarget(el, { offset: id === 'technology' || id === 'refuel' ? 0 : -64 })
+        else scrollToTarget(0)
       })
     }
     window.addEventListener('hashchange', onChange)
