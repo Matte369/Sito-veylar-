@@ -51,7 +51,7 @@ function drawCover(
 export default function ScrollVideo() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [posterVisible, setPosterVisible] = useState(true)
+  const [hasFrame, setHasFrame] = useState(false)
   const [canvasReady, setCanvasReady] = useState(false)
 
   useEffect(() => {
@@ -100,13 +100,22 @@ export default function ScrollVideo() {
       raf = requestAnimationFrame(tick)
     }
 
-    const onLoadedData = () => {
-      if (!cancelled) setPosterVisible(false)
-    }
-    video.addEventListener('loadeddata', onLoadedData)
+    // Resolves once the visible video has decoded its first frame.
+    const visibleReady = new Promise<void>((resolve) => {
+      const onLoadedData = () => {
+        if (!cancelled) setHasFrame(true)
+        resolve()
+      }
+      if (video.readyState >= 2) onLoadedData()
+      else video.addEventListener('loadeddata', onLoadedData, { once: true })
+    })
 
     // Build a cache of decoded frames from a dedicated (off-DOM) video element.
     const extract = async () => {
+      await visibleReady
+      await new Promise((r) => setTimeout(r, 300))
+      if (cancelled) return
+
       const source = document.createElement('video')
       source.muted = true
       source.playsInline = true
@@ -115,8 +124,7 @@ export default function ScrollVideo() {
       source.src = HERO_VIDEO_URL
 
       try {
-        await waitForEvent(source, 'loadeddata')
-        await new Promise((r) => setTimeout(r, 300))
+        if (source.readyState < 2) await waitForEvent(source, 'loadeddata')
         if (cancelled) return
 
         const duration = source.duration
@@ -166,7 +174,6 @@ export default function ScrollVideo() {
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', resize)
       window.removeEventListener('resize', onScroll)
-      video.removeEventListener('loadeddata', onLoadedData)
       frames.forEach((b) => b.close())
       frames = []
     }
@@ -178,7 +185,7 @@ export default function ScrollVideo() {
         src={HERO_POSTER_URL}
         alt=""
         className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
-          posterVisible ? 'opacity-100' : 'opacity-0'
+          hasFrame || hasFrame && !canvasReady ? 'opacity-100' : 'opacity-0'
         }`}
         onError={(e) => (e.currentTarget.style.display = 'none')}
       />

@@ -11,7 +11,7 @@ export default function Logo() {
 
   if (failed) {
     return (
-      <span className="text-sm font-medium uppercase tracking-[0.15em] text-white/85" role="img" aria-label="VEYLAR">
+      <span className="text-lg font-medium tracking-tight text-white sm:text-xl" role="img" aria-label="VEYLAR">
         VEYLAR
       </span>
     )

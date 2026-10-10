@@ -45,7 +45,7 @@ export default function SectionTwo() {
         </Reveal>
       </div>
 
-      <div className="flex flex-1 flex-col justify-end gap-12 pt-12 md:flex-row md:items-end md:justify-between md:gap-16">
+      <div className="flex flex-1 flex-col justify-end gap-12 md:flex-row md:items-end md:justify-between md:gap-16">
         <div className="max-w-xl">
           <Reveal delay={180}>
             <h2 className="text-5xl font-normal leading-[1.05] tracking-tight text-white drop-shadow-lg sm:text-6xl lg:text-7xl">

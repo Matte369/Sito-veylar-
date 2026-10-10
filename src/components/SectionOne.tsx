@@ -12,7 +12,7 @@ export default function SectionOne() {
       className="flex min-h-screen flex-col justify-between px-5 pb-12 pt-24 supports-[height:100svh]:min-h-[100svh] sm:px-8 sm:pt-28 md:px-12 md:pb-16"
     >
       <div className="flex flex-col gap-8 sm:flex-row sm:justify-between">
-        <ul className="space-y-1.5">
+        <ul className="flex flex-col gap-2">
           {categories.map((item, i) => (
             <Reveal
               as="li"
@@ -52,14 +52,14 @@ export default function SectionOne() {
         <Reveal delay={420} className="self-start md:self-auto">
           <div className="flex items-center gap-4 rounded-xl bg-white/15 p-3 backdrop-blur-md">
             <FounderPortrait />
-            <div className="pr-2">
+            <div className="flex flex-col gap-1.5 pr-2">
               <p className="text-sm font-medium text-white">Meet the Founder</p>
-              <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.15em] text-white/70">
+              <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-white/60">
                 MATTEO CARMINATI — FOUNDER, VEYLAR
               </p>
               <a
                 href={mailto('Hello Matteo — VEYLAR')}
-                className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-white px-4 py-2 text-xs font-medium text-black transition-colors duration-300 hover:bg-white/85"
+                className="mt-1.5 inline-flex items-center gap-1 self-start rounded-full bg-white px-4 py-2 text-xs font-medium text-black transition-colors duration-300 hover:bg-white/85"
               >
                 Get in Touch
                 <ChevronRight size={14} />

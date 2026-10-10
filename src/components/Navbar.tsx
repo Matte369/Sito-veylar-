@@ -26,7 +26,7 @@ export default function Navbar() {
             <Reveal as="li" key={link.label} delay={100 + i * 100}>
               <a href={link.href} className="text-sm text-white/85 transition-colors duration-300 hover:text-white">
                 {link.label}
-                {link.sup && <sup className="ml-0.5 text-[9px]">{link.sup}</sup>}
+                {link.sup && <sup className="ml-0.5 font-mono text-[10px] text-white/60">{link.sup}</sup>}
               </a>
             </Reveal>
           ))}
