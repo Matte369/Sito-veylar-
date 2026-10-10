@@ -56,9 +56,9 @@ function physical(opts: MatOpts) {
 
 const palette = {
   paint: (): MatOpts => ({
-    color: '#aeb4bb',
-    metalness: 0.82,
-    roughness: 0.3,
+    color: '#8c9299',
+    metalness: 0.65,
+    roughness: 0.24,
     clearcoat: 1,
     clearcoatRoughness: 0.08,
   }),
@@ -102,19 +102,17 @@ function subdivide(positions: Float32Array, levels: number) {
   return tris
 }
 
+type Deform = (x: number, y: number, z: number) => [number, number, number]
+
 /**
- * Extrudes a side profile across the width and sculpts it in plan view.
- * Caps (the flat flanks) are subdivided so the taper bends them smoothly,
- * and they are shaded separately from the rounded edges to avoid streaks.
+ * Extrudes a side profile across the width, then sculpts it with `deform`.
+ * The flanks are subdivided so they can bend smoothly, and they are shaded
+ * separately from the rounded edges so the reflections stay clean.
  */
-function sculptedExtrude(
-  shape: THREE.Shape,
-  width: number,
-  bevel: number,
-  taper: (x: number, y: number) => number,
-) {
+function sculptedExtrude(shape: THREE.Shape, width: number, bevel: number, deform: Deform) {
   const geo = new THREE.ExtrudeGeometry(shape, {
     depth: width - bevel * 2,
+    steps: 28,
     bevelEnabled: true,
     bevelThickness: bevel,
     bevelSize: bevel,
@@ -127,7 +125,10 @@ function sculptedExtrude(
 
   const build = (positions: Float32Array) => {
     for (let i = 0; i < positions.length; i += 3) {
-      positions[i + 2] *= taper(positions[i], positions[i + 1])
+      const [x, y, z] = deform(positions[i], positions[i + 1], positions[i + 2])
+      positions[i] = x
+      positions[i + 1] = y
+      positions[i + 2] = z
     }
     const g = new THREE.BufferGeometry()
     g.setAttribute('position', new THREE.BufferAttribute(positions, 3))
@@ -142,68 +143,157 @@ function sculptedExtrude(
   return mergeGeometries([capGeo, sideGeo])!
 }
 
+/* ---------- Body surface ---------- */
+
+const HALF_W = W / 2
+const SILL = 0.3
+const ARCH = 0.44
+
+/** Plan view: rounded nose and tail. */
+function planFactor(x: number) {
+  const front = 0.17 * Math.pow(smoothstep(1.25, 2.42, x), 1.8)
+  const rear = 0.13 * Math.pow(smoothstep(1.35, 2.38, -x), 1.6)
+  return 1 - front - rear
+}
+
+/** Cross-section: flanks bulge out at mid height and tuck in at sill and shoulder. */
+function sectionFactor(y: number) {
+  const t = (y - 0.6) / 0.34
+  return 1 - 0.065 * Math.min(1.4, t * t)
+}
+
+/** Extra width that flares the body around each wheel arch. */
+function flare(x: number, y: number) {
+  if (y > 0.92) return 0
+  let bump = 0
+  for (const ax of [AXLE_F, AXLE_R]) {
+    const d = Math.hypot(x - ax, y - SILL)
+    bump += Math.exp(-Math.pow((d - 0.53) / 0.09, 2))
+  }
+  return 0.028 * bump * (1 - smoothstep(0.82, 0.92, y))
+}
+
+const bodyDeform: Deform = (x, y, z) => {
+  const k = Math.abs(z) / HALF_W
+  const nz = z * planFactor(x) * sectionFactor(y) + Math.sign(z) * flare(x, y) * k
+  // Crown the hood and rear deck.
+  const crown = 0.04 * (1 - k * k) * smoothstep(0.72, 0.9, y) * (1 - smoothstep(0.95, 1.0, y))
+  return [x, y + crown, nz]
+}
+
+/** Outer surface position on the left flank (+Z) for detail placement. */
+function flankZ(x: number, y: number, offset = 0.004) {
+  return HALF_W * planFactor(x) * sectionFactor(y) + flare(x, y) + offset
+}
+
+/** A thin dark line drawn on the flank, for panel gaps. */
+function panelLine(points: [number, number][], mat: THREE.Material, side: 1 | -1) {
+  const pts = points.map(([x, y]) => new THREE.Vector3(x, y, side * flankZ(x, y, 0.002)))
+  const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal')
+  return new THREE.Mesh(new THREE.TubeGeometry(curve, Math.max(24, pts.length * 12), 0.0026, 6, false), mat)
+}
+
 function bodyShell(materials: THREE.MeshPhysicalMaterial[]) {
   const g = new THREE.Group()
   const paint = physical(palette.paint())
   const glass = physical(palette.glass())
   const trim = physical(palette.trim())
-  materials.push(paint, glass, trim)
+  const gap = physical({ color: '#3a3e44', metalness: 0.2, roughness: 0.7 })
+  const liner = physical({ color: '#131416', metalness: 0, roughness: 0.95, side: THREE.DoubleSide })
+  const inner = physical({ color: '#2b2e33', metalness: 0.2, roughness: 0.8, side: THREE.BackSide })
+  materials.push(paint, glass, trim, gap, liner, inner)
 
   // Lower body: side profile with both wheel arches cut out.
   const s = new THREE.Shape()
-  const sill = 0.3
-  const arch = 0.44
-  s.moveTo(-2.3, sill + 0.04)
-  s.lineTo(AXLE_R - arch, sill)
-  s.absarc(AXLE_R, sill, arch, Math.PI, 0, true)
-  s.lineTo(AXLE_F - arch, sill)
-  s.absarc(AXLE_F, sill, arch, Math.PI, 0, true)
-  s.lineTo(2.22, sill)
-  s.quadraticCurveTo(2.36, sill + 0.02, 2.38, 0.46)
-  s.quadraticCurveTo(2.4, 0.6, 2.3, 0.66)
-  s.bezierCurveTo(1.7, 0.8, 1.15, 0.88, 0.78, 0.9)
-  s.lineTo(-1.75, 0.94)
-  s.bezierCurveTo(-2.05, 0.94, -2.28, 0.9, -2.34, 0.8)
-  s.quadraticCurveTo(-2.4, 0.6, -2.3, sill + 0.04)
+  s.moveTo(-2.3, SILL + 0.05)
+  s.lineTo(AXLE_R - ARCH, SILL)
+  s.absarc(AXLE_R, SILL, ARCH, Math.PI, 0, true)
+  s.lineTo(AXLE_F - ARCH, SILL)
+  s.absarc(AXLE_F, SILL, ARCH, Math.PI, 0, true)
+  s.lineTo(2.2, SILL)
+  s.quadraticCurveTo(2.37, SILL + 0.02, 2.41, 0.42)
+  s.quadraticCurveTo(2.44, 0.54, 2.33, 0.6)
+  s.bezierCurveTo(1.85, 0.7, 1.25, 0.86, 0.8, 0.9)
+  s.lineTo(-1.7, 0.95)
+  s.bezierCurveTo(-2.05, 0.95, -2.29, 0.91, -2.35, 0.8)
+  s.quadraticCurveTo(-2.41, 0.6, -2.3, SILL + 0.05)
 
-  const lower = sculptedExtrude(s, W, 0.09, (x, y) => {
-    const ends = 1 - 0.13 * Math.pow(smoothstep(1.4, 2.4, Math.abs(x)), 1.6)
-    const shoulder = 1 - 0.05 * smoothstep(0.7, 0.95, y)
-    return ends * shoulder
-  })
-  const lowerMesh = new THREE.Mesh(lower, paint)
-  g.add(lowerMesh)
+  const lower = sculptedExtrude(s, W, 0.1, bodyDeform)
+  g.add(new THREE.Mesh(lower, paint))
+  // Dark interior face, visible when the shell is lifted off the platform.
+  g.add(new THREE.Mesh(lower, inner))
 
-  // Greenhouse: a single dark glass canopy, fastback.
+  // Greenhouse: one dark glass canopy with strong tumblehome.
   const c = new THREE.Shape()
-  c.moveTo(0.82, 0.88)
+  c.moveTo(0.84, 0.88)
   c.bezierCurveTo(0.55, 1.08, 0.25, 1.32, -0.15, 1.36)
   c.bezierCurveTo(-0.7, 1.4, -1.1, 1.34, -1.5, 1.18)
-  c.bezierCurveTo(-1.8, 1.06, -1.98, 0.98, -2.08, 0.92)
-  c.lineTo(0.82, 0.88)
-  const canopy = sculptedExtrude(c, W * 0.86, 0.1, (_x, y) => 1 - 0.2 * smoothstep(0.92, 1.38, y))
+  c.bezierCurveTo(-1.8, 1.06, -1.98, 0.99, -2.1, 0.93)
+  c.lineTo(0.84, 0.88)
+  const canopy = sculptedExtrude(c, W * 0.88, 0.12, (x, y, z) => [
+    x,
+    y,
+    z * planFactor(x) * (1 - 0.22 * smoothstep(0.92, 1.4, y)),
+  ])
   g.add(new THREE.Mesh(canopy, glass))
 
-  // Dark sill and diffuser trim.
-  const sillGeo = new THREE.BoxGeometry(2.0, 0.07, W * 0.96)
-  const sillMesh = new THREE.Mesh(sillGeo, trim)
-  sillMesh.position.set(0, sill + 0.02, 0)
-  g.add(sillMesh)
+  // Black arch liners so the wheel wells read as solid.
+  for (const ax of [AXLE_F, AXLE_R]) {
+    const arch = new THREE.Mesh(new THREE.CylinderGeometry(ARCH - 0.01, ARCH - 0.01, W * 0.86, 40, 1, true, -Math.PI / 2, Math.PI), liner)
+    arch.rotation.x = -Math.PI / 2
+    arch.position.set(ax, SILL, 0)
+    g.add(arch)
+  }
 
-  // Light signatures: a full-width white bar at the front, a red bar at the rear.
-  const front = new THREE.Mesh(
-    new THREE.BoxGeometry(0.02, 0.025, W * 0.78),
-    new THREE.MeshStandardMaterial({ color: '#ffffff', emissive: '#ffffff', emissiveIntensity: 2.2 }),
-  )
-  front.position.set(2.31, 0.64, 0)
-  front.rotation.z = -0.25
-  g.add(front)
-  const rear = new THREE.Mesh(
-    new THREE.BoxGeometry(0.02, 0.03, W * 0.84),
-    new THREE.MeshStandardMaterial({ color: '#ff3a1c', emissive: '#ff2a10', emissiveIntensity: 2 }),
-  )
-  rear.position.set(-2.355, 0.8, 0)
-  g.add(rear)
+  // Sill blade, front intake and rear diffuser in satin black.
+  const sill = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.06, W * 0.95), trim)
+  sill.position.set(0, SILL + 0.02, 0)
+  const intake = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.09, W * 0.6), trim)
+  intake.position.set(2.32, 0.4, 0)
+  const diffuser = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, W * 0.7), trim)
+  diffuser.position.set(-2.3, 0.37, 0)
+  g.add(sill, intake, diffuser)
+
+  // Lights: full-width DRL with slim headlamp pods, red light bar at the rear.
+  const white = new THREE.MeshStandardMaterial({ color: '#ffffff', emissive: '#ffffff', emissiveIntensity: 2.4 })
+  const red = new THREE.MeshStandardMaterial({ color: '#ff3a1c', emissive: '#ff2a10', emissiveIntensity: 2.2 })
+  const drl = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.018, W * 0.74), white)
+  drl.position.set(2.35, 0.585, 0)
+  drl.rotation.z = -0.45
+  g.add(drl)
+  for (const side of [1, -1] as const) {
+    const pod = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.045, 0.3), glass)
+    pod.position.set(2.24, 0.585, side * 0.6)
+    pod.rotation.set(0, side * 0.4, -0.35)
+    const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.012, 0.22), white)
+    lamp.position.set(0.045, 0, 0)
+    pod.add(lamp)
+    g.add(pod)
+  }
+  const tail = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.03, W * 0.82), red)
+  tail.position.set(-2.358, 0.8, 0)
+  g.add(tail)
+
+  // Panel gaps, flush handles and camera mirrors on both flanks.
+  for (const side of [1, -1] as const) {
+    g.add(
+      panelLine([[0.74, 0.9], [0.7, 0.7], [0.66, 0.5], [0.62, 0.36]], gap, side),
+      panelLine([[-0.36, 0.93], [-0.38, 0.65], [-0.38, 0.36]], gap, side),
+      panelLine([[-0.98, 0.94], [-0.98, 0.78], [-0.94, 0.64], [-0.96, 0.52]], gap, side),
+      panelLine([[-1.68, 0.84], [-1.88, 0.84], [-1.88, 0.73], [-1.68, 0.73], [-1.68, 0.84]], gap, side),
+    )
+    for (const hx of [0.18, -0.78]) {
+      const handle = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.022, 0.012), trim)
+      handle.position.set(hx, 0.83, side * flankZ(hx, 0.83, 0.002))
+      g.add(handle)
+    }
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.02, 0.1), trim)
+    arm.position.set(0.66, 0.95, side * (flankZ(0.66, 0.9) + 0.03))
+    const cam = new THREE.Mesh(new THREE.CapsuleGeometry(0.028, 0.08, 6, 16), paint)
+    cam.rotation.z = Math.PI / 2
+    cam.position.set(0.64, 0.96, side * (flankZ(0.66, 0.9) + 0.09))
+    g.add(arm, cam)
+  }
 
   return g
 }
@@ -211,39 +301,80 @@ function bodyShell(materials: THREE.MeshPhysicalMaterial[]) {
 function wheel(materials: THREE.MeshPhysicalMaterial[], side: 1 | -1) {
   const g = new THREE.Group()
   const rubber = physical(palette.rubber())
-  const rim = physical(palette.graphite())
-  const disc = physical(palette.aluminium())
-  materials.push(rubber, rim, disc)
+  const rim = physical({ color: '#2f3237', metalness: 0.85, roughness: 0.28, clearcoat: 0.6 })
+  const face = physical({ color: '#c9cdd2', metalness: 0.95, roughness: 0.18 })
+  const barrel = physical({ color: '#1a1b1d', metalness: 0.4, roughness: 0.6 })
+  const disc = physical({ color: '#8d9298', metalness: 0.9, roughness: 0.45 })
+  const caliper = physical({ color: '#d9531e', metalness: 0.3, roughness: 0.35, clearcoat: 1 })
+  materials.push(rubber, rim, face, barrel, disc, caliper)
+  const out = side // the visible face points away from the car
 
-  // Tyre: lathe a rounded section around the axle.
-  const pts: THREE.Vector2[] = []
-  const inner = 0.27
-  const outer = WHEEL_R
-  const half = 0.13
-  for (let i = 0; i <= 16; i++) {
-    const a = -Math.PI / 2 + (i / 16) * Math.PI
-    pts.push(new THREE.Vector2(outer - 0.04 + Math.cos(a) * 0.04, Math.sin(a) * half))
+  // Tyre section: sidewall bulge, shoulder and a tread with four grooves.
+  const inner = 0.265
+  const half = 0.125
+  const pts: THREE.Vector2[] = [new THREE.Vector2(inner, -half * 0.86)]
+  for (let i = 0; i <= 10; i++) {
+    const t = i / 10
+    pts.push(new THREE.Vector2(inner + (WHEEL_R - 0.03 - inner) * t, -half * (0.86 + 0.14 * Math.sin(t * Math.PI))))
   }
-  pts.unshift(new THREE.Vector2(inner, -half * 0.9))
-  pts.push(new THREE.Vector2(inner, half * 0.9))
-  const tyre = new THREE.Mesh(new THREE.LatheGeometry(pts, 64), rubber)
+  const grooves = [-0.07, -0.025, 0.025, 0.07]
+  for (let i = 0; i <= 40; i++) {
+    const zz = -half + 0.02 + (i / 40) * (half * 2 - 0.04)
+    const inGroove = grooves.some((gz) => Math.abs(zz - gz) < 0.006)
+    pts.push(new THREE.Vector2(WHEEL_R - (inGroove ? 0.008 : 0), zz))
+  }
+  for (let i = 10; i >= 0; i--) {
+    const t = i / 10
+    pts.push(new THREE.Vector2(inner + (WHEEL_R - 0.03 - inner) * t, half * (0.86 + 0.14 * Math.sin(t * Math.PI))))
+  }
+  const tyre = new THREE.Mesh(new THREE.LatheGeometry(pts, 96), rubber)
   tyre.rotation.x = Math.PI / 2
   g.add(tyre)
 
-  // Rim face with five aero spokes.
-  const face = new THREE.Mesh(new THREE.CylinderGeometry(inner, inner, 0.2, 48), rim)
-  face.rotation.x = Math.PI / 2
-  g.add(face)
-  for (let i = 0; i < 5; i++) {
-    const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.05, inner * 1.7, 0.03), disc)
-    spoke.position.z = side * 0.11
-    spoke.rotation.z = (i / 5) * Math.PI * 2
+  // Rim barrel and lip.
+  const barrelMesh = new THREE.Mesh(new THREE.CylinderGeometry(inner, inner, 0.22, 64, 1, true), barrel)
+  barrelMesh.rotation.x = Math.PI / 2
+  const lip = new THREE.Mesh(new THREE.TorusGeometry(inner - 0.006, 0.008, 8, 64), face)
+  lip.position.z = out * 0.1
+  g.add(barrelMesh, lip)
+
+  // Brake disc and caliper behind the spokes.
+  const discMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.025, 48), disc)
+  discMesh.rotation.x = Math.PI / 2
+  discMesh.position.z = out * 0.02
+  const cal = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.16, 0.06), caliper)
+  cal.position.set(-0.17, 0.05, out * 0.04)
+  cal.rotation.z = 0.35
+  g.add(discMesh, cal)
+
+  // Ten-spoke aero face: tapered twin spokes over a dark centre.
+  const centre = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.085, 0.04, 32), rim)
+  centre.rotation.x = Math.PI / 2
+  centre.position.z = out * 0.085
+  g.add(centre)
+  const spokeShape = new THREE.Shape()
+  spokeShape.moveTo(-0.022, 0.07)
+  spokeShape.lineTo(0.022, 0.07)
+  spokeShape.lineTo(0.012, inner - 0.01)
+  spokeShape.lineTo(-0.012, inner - 0.01)
+  spokeShape.closePath()
+  const spokeGeo = new THREE.ExtrudeGeometry(spokeShape, {
+    depth: 0.02,
+    bevelEnabled: true,
+    bevelSize: 0.005,
+    bevelThickness: 0.005,
+    bevelSegments: 2,
+  })
+  for (let i = 0; i < 10; i++) {
+    const spoke = new THREE.Mesh(spokeGeo, i % 2 ? face : rim)
+    spoke.rotation.z = (i / 10) * Math.PI * 2
+    spoke.position.z = out * 0.08 - 0.01
     g.add(spoke)
   }
-  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.04, 24), disc)
-  hub.rotation.x = Math.PI / 2
-  hub.position.z = side * 0.12
-  g.add(hub)
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.012, 32), face)
+  cap.rotation.x = Math.PI / 2
+  cap.position.z = out * 0.11
+  g.add(cap)
   return g
 }
 

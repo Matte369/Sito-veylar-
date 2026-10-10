@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { CHAPTERS, chapterWeight, VeylarStage } from '../three/stage'
-import { mailto } from '../config'
 
 const RAIL = [
   { id: 'hero', label: 'Overview' },
@@ -195,18 +194,18 @@ export default function ExplodedStage() {
                         </button>
                       ) : (
                         <a
-                          href="#roadmap"
+                          href="#support"
                           className="inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-medium text-paper transition-colors duration-300 hover:bg-graphite active:scale-[0.98]"
                         >
-                          See the roadmap
+                          Support us
                           <ArrowRight size={16} strokeWidth={1.75} />
                         </a>
                       )}
                       <a
-                        href={mailto('VEYLAR enquiry')}
+                        href={isHero ? '#support' : '#contact'}
                         className="inline-flex items-center rounded-full border border-ink/20 px-6 py-3 text-sm font-medium text-ink transition-colors duration-300 hover:border-ink/40 hover:bg-ink/5 active:scale-[0.98]"
                       >
-                        Contact
+                        {isHero ? 'Support us' : 'Contact'}
                       </a>
                     </div>
                   )}

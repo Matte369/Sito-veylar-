@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 import { ACCENT, buildCar, energyPaths, type Part, type PartKey } from './car'
 
 export type Chapter = {
@@ -91,6 +90,58 @@ export function chapterWeight(c: Chapter, p: number, fade = 0.03) {
   return smooth(c.range[0] - fade, c.range[0], p) * (1 - smooth(c.range[1], c.range[1] + fade, p))
 }
 
+/** Photo studio for reflections: grey cove with large soft light panels. */
+function studioEnvironment() {
+  const env = new THREE.Scene()
+  const room = new THREE.Mesh(
+    new THREE.BoxGeometry(30, 14, 30),
+    new THREE.MeshBasicMaterial({ color: new THREE.Color('#8e939a'), side: THREE.BackSide }),
+  )
+  room.position.y = 5
+  env.add(room)
+  const panel = (w: number, h: number, intensity: number, pos: [number, number, number], rot: [number, number, number]) => {
+    const m = new THREE.Mesh(
+      new THREE.PlaneGeometry(w, h),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color(1, 1, 1).multiplyScalar(intensity), side: THREE.DoubleSide }),
+    )
+    m.position.set(...pos)
+    m.rotation.set(...rot)
+    env.add(m)
+  }
+  panel(14, 3.5, 6, [0, 11.5, 0], [Math.PI / 2, 0, 0]) // overhead softbox, long highlight on the roof and hood
+  panel(10, 2.2, 3.2, [0, 4, -14.5], [0, 0, 0]) // back strip
+  panel(10, 2.2, 3.2, [0, 4, 14.5], [0, Math.PI, 0]) // front strip, the line along the flanks
+  panel(2.2, 8, 2.4, [14.5, 4, 0], [0, -Math.PI / 2, 0])
+  panel(2.2, 8, 2.4, [-14.5, 4, 0], [0, Math.PI / 2, 0])
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.MeshBasicMaterial({ color: '#c7cbd0' }))
+  floor.rotation.x = -Math.PI / 2
+  floor.position.y = -1.9
+  env.add(floor)
+  return env
+}
+
+/** Soft ambient-occlusion blob that grounds the car on the floor. */
+function contactShadow() {
+  const size = 256
+  const c = document.createElement('canvas')
+  c.width = c.height = size
+  const ctx = c.getContext('2d')!
+  const grad = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
+  grad.addColorStop(0, 'rgba(20,24,30,0.55)')
+  grad.addColorStop(0.55, 'rgba(20,24,30,0.28)')
+  grad.addColorStop(1, 'rgba(20,24,30,0)')
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 0, size, size)
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(5.6, 2.6),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }),
+  )
+  mesh.rotation.x = -Math.PI / 2
+  mesh.position.y = 0.003
+  mesh.renderOrder = -1
+  return mesh
+}
+
 export class VeylarStage {
   private renderer: THREE.WebGLRenderer
   private scene = new THREE.Scene()
@@ -105,16 +156,19 @@ export class VeylarStage {
   private tmp = new THREE.Vector3()
   private target = new THREE.Vector3()
 
+  /** Showcase mode: car centred in its canvas, no layout offset. */
+  centered = false
+
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true })
     this.renderer.setClearColor(0x000000, 0)
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping
-    this.renderer.toneMappingExposure = 1.05
+    this.renderer.toneMappingExposure = 1.0
     this.renderer.shadowMap.enabled = true
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
 
     const pmrem = new THREE.PMREMGenerator(this.renderer)
-    this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
+    this.scene.environment = pmrem.fromScene(studioEnvironment(), 0.02).texture
     pmrem.dispose()
 
     const key = new THREE.DirectionalLight(0xffffff, 1.6)
@@ -131,7 +185,7 @@ export class VeylarStage {
 
     const ground = new THREE.Mesh(
       new THREE.PlaneGeometry(40, 40),
-      new THREE.ShadowMaterial({ color: 0x2a3038, opacity: 0.16 }),
+      new THREE.ShadowMaterial({ color: 0x2a3038, opacity: 0.12 }),
     )
     ground.rotation.x = -Math.PI / 2
     ground.receiveShadow = true
@@ -140,6 +194,7 @@ export class VeylarStage {
     const car = buildCar()
     this.parts = car.parts
     this.pivot.add(car.root)
+    car.root.add(contactShadow())
     this.scene.add(this.pivot)
     for (const p of this.parts) {
       for (const m of p.materials) m.emissive = ACCENT.clone()
@@ -169,13 +224,14 @@ export class VeylarStage {
     this.renderer.setSize(width, height, false)
     this.camera.aspect = width / height
     // Desktop: push the car to the right of the copy. Portrait: lift it above the copy.
-    if (width >= 900) this.camera.setViewOffset(width, height, -width * 0.12, 0, width, height)
+    if (this.centered) this.camera.clearViewOffset()
+    else if (width >= 900) this.camera.setViewOffset(width, height, -width * 0.12, 0, width, height)
     else this.camera.setViewOffset(width, height, 0, height * 0.16, width, height)
     this.camera.updateProjectionMatrix()
   }
 
   /** Renders one frame for scroll progress p (0-1). */
-  update(p: number, time: number, sway: boolean) {
+  update(p: number, time: number, sway: boolean, spin?: number) {
     const lift = smooth(0.08, 0.24, p) * (1 - smooth(0.85, 0.95, p))
     const spread = smooth(0.24, 0.38, p) * (1 - smooth(0.79, 0.88, p))
     const open = Math.max(lift, spread)
@@ -187,10 +243,11 @@ export class VeylarStage {
 
     const idle = sway ? Math.sin(time * 0.4) * 0.06 * (1 - smooth(0.02, 0.1, p)) : 0
     this.pivot.rotation.y = -0.7 + easeInOut(smooth(0.05, 0.96, p)) * Math.PI * 2 + idle
+    if (spin !== undefined) this.pivot.rotation.y = spin
 
     // Frame the car: wider shot when exploded, lower eye line when assembled.
     const portrait = this.width < 900
-    const radius = lerp(2.75, 3.6, open) * (portrait ? 0.94 : 1)
+    const radius = lerp(2.75, 3.6, open) * (portrait ? 0.94 : 1.06)
     const vHalf = THREE.MathUtils.degToRad(this.camera.fov / 2)
     const hHalf = Math.atan(Math.tan(vHalf) * this.camera.aspect)
     const dist = radius / Math.tan(Math.min(vHalf, hHalf * (portrait ? 1 : 0.8)))
