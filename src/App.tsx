@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import Navbar from './components/Navbar'
 import ExplodedStage from './components/ExplodedStage'
+import DesignGallery from './components/DesignGallery'
 import Figures from './components/Figures'
 import EnergyChain from './components/EnergyChain'
 import Journey from './components/Journey'
@@ -21,7 +22,7 @@ export default function App() {
   useEffect(() => startSmoothScroll(), [])
 
   return (
-    <>
+    <div className="grain">
       <Navbar route={route} />
       <main>
         {route === 'support' && <SupportPage />}
@@ -29,6 +30,7 @@ export default function App() {
         {route === 'home' && (
           <>
             <ExplodedStage />
+            <DesignGallery />
             <Figures />
             <EnergyChain />
             <Journey />
@@ -42,6 +44,6 @@ export default function App() {
         )}
       </main>
       <Footer />
-    </>
+    </div>
   )
 }

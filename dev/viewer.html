@@ -1,0 +1,33 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>body{margin:0;background:#cfcfcd}canvas{display:block}</style></head>
+<body><canvas id="c" width="1600" height="900"></canvas>
+<script type="module">
+import * as THREE from 'three'
+import { buildCar } from '/src/three/car.ts'
+const canvas = document.getElementById('c')
+const r = new THREE.WebGLRenderer({ canvas, antialias: true })
+r.setSize(1600, 900, false)
+r.toneMapping = THREE.ACESFilmicToneMapping
+r.setScissorTest(true)
+const scene = new THREE.Scene()
+scene.background = new THREE.Color('#c9c9c7')
+const env = new THREE.Scene()
+const room = new THREE.Mesh(new THREE.BoxGeometry(30,14,30), new THREE.MeshBasicMaterial({ color: '#3b3f45', side: THREE.BackSide })); room.position.y = 5; env.add(room)
+const pan = (w,h,i,p,rot)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:new THREE.Color(1,1,1).multiplyScalar(i),side:THREE.DoubleSide}));m.position.set(...p);m.rotation.set(...rot);env.add(m)}
+pan(14,4,9,[0,11.5,0],[Math.PI/2,0,0]); pan(16,1.6,6,[0,3,14.5],[0,Math.PI,0]); pan(10,2.2,3.2,[0,4,-14.5],[0,0,0]); pan(2.2,8,2.4,[14.5,4,0],[0,-Math.PI/2,0]); pan(2.2,8,2.4,[-14.5,4,0],[0,Math.PI/2,0])
+const pm = new THREE.PMREMGenerator(r); scene.environment = pm.fromScene(env, 0.02).texture
+const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(3,8,4); scene.add(key, new THREE.HemisphereLight(0xf4f6f8,0xc9ccd0,0.6))
+const car = buildCar(); scene.add(car.root)
+const views = [
+  { pos: [5.2, 1.6, 4.6], vp: [0, 450, 800, 450] },   // 3/4 front
+  { pos: [0, 0.6, 10], vp: [800, 450, 800, 450] },     // side
+  { pos: [7, 0.7, 0], vp: [0, 0, 800, 450] },          // front
+  { pos: [-7, 1.0, 0], vp: [800, 0, 800, 450] },       // rear
+]
+const cam = new THREE.PerspectiveCamera(28, 800/450, 0.1, 100)
+for (const v of views) {
+  cam.position.set(...v.pos); cam.lookAt(0, 0.5, 0)
+  r.setViewport(...v.vp); r.setScissor(...v.vp); r.render(scene, cam)
+}
+window.done = true
+</script></body></html>

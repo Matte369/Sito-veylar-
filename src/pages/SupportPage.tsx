@@ -1,6 +1,5 @@
-import { ArrowUpRight } from 'lucide-react'
+import { Button, ButtonLink } from '../components/Button'
 import Reveal from '../components/Reveal'
-import ShowcaseCar from '../components/ShowcaseCar'
 import { CROWDFUNDING_URL } from '../config'
 import RevealText from '../components/RevealText'
 import { useLang } from '../i18n'
@@ -23,23 +22,13 @@ export default function SupportPage() {
 
           <div className="mt-10 flex flex-col items-start gap-3 motion-safe:animate-[fadeUp_900ms_450ms_both]">
             {ready ? (
-              <a
-                href={CROWDFUNDING_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group inline-flex items-center gap-2 rounded-full bg-ink px-8 py-4 text-base font-medium text-paper transition-colors duration-300 hover:bg-graphite active:scale-[0.98]"
-              >
+              <ButtonLink href={CROWDFUNDING_URL} external icon="out">
                 {t.support.donate}
-                <ArrowUpRight size={18} strokeWidth={1.75} className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-              </a>
+              </ButtonLink>
             ) : (
-              <span
-                aria-disabled="true"
-                className="inline-flex cursor-not-allowed items-center gap-2 rounded-full bg-ink/40 px-8 py-4 text-base font-medium text-paper"
-              >
+              <Button disabled icon="out">
                 {t.support.donate}
-                <ArrowUpRight size={18} strokeWidth={1.75} />
-              </span>
+              </Button>
             )}
             <p className="text-sm text-steel">
               {ready ? t.support.ready : t.support.soon}
@@ -48,7 +37,11 @@ export default function SupportPage() {
         </div>
 
         <Reveal delay={120}>
-          <ShowcaseCar className="aspect-[4/3] w-full rounded-3xl" />
+          <div className="rounded-[2rem] bg-ink/[0.03] p-1.5 ring-1 ring-ink/[0.06]">
+            <div className="overflow-hidden rounded-[calc(2rem-0.375rem)] bg-[#c9c8c5] shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]">
+              <img src="design/three-quarter-front.jpg" alt="VEYLAR" width={694} height={215} className="aspect-[694/215] w-full object-cover" />
+            </div>
+          </div>
         </Reveal>
       </section>
 

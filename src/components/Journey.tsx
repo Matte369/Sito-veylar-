@@ -169,14 +169,14 @@ export default function Journey() {
       ring.forEach(([lon, lat], i) => (i ? g.lineTo(X(lon), Y(lat)) : g.moveTo(X(lon), Y(lat))))
       g.closePath()
     }
-    g.fillStyle = '#dfe2e6'
+    g.fillStyle = '#dcdbd8'
     g.fill()
-    g.strokeStyle = 'rgba(21,23,26,0.22)'
+    g.strokeStyle = 'rgba(18,18,19,0.22)'
     g.lineWidth = 1
     g.stroke()
 
     const dim = 1 - 0.45 * s2
-    g.fillStyle = '#15171a'
+    g.fillStyle = '#121213'
     for (const st of geo.stations) {
       const a = smooth(st.t - 0.06, st.t, s1)
       if (a <= 0) continue
@@ -191,14 +191,14 @@ export default function Journey() {
       const target = geo.total * s2
       // Full route, faint and dashed.
       g.setLineDash([3, 5])
-      g.strokeStyle = 'rgba(21,23,26,0.25)'
+      g.strokeStyle = 'rgba(18,18,19,0.25)'
       g.lineWidth = 1.5
       g.beginPath()
       geo.route.forEach(([lon, lat], i) => (i ? g.lineTo(X(lon), Y(lat)) : g.moveTo(X(lon), Y(lat))))
       g.stroke()
       g.setLineDash([])
       // Driven part.
-      g.strokeStyle = '#d9531e'
+      g.strokeStyle = '#d38a3f'
       g.lineWidth = 3.5
       g.lineCap = 'round'
       g.lineJoin = 'round'
@@ -230,7 +230,7 @@ export default function Journey() {
         const cx = X(c.at[0])
         const cy = Y(c.at[1])
         g.globalAlpha = a
-        g.fillStyle = '#15171a'
+        g.fillStyle = '#121213'
         g.beginPath()
         g.arc(cx, cy, 3.5, 0, Math.PI * 2)
         g.fill()
@@ -238,7 +238,7 @@ export default function Journey() {
         const left = c.at[0] > 14.5
         g.textAlign = left ? 'right' : 'left'
         g.lineWidth = 4
-        g.strokeStyle = '#f3f4f5'
+        g.strokeStyle = '#f4f4f2'
         g.strokeText(name, cx + (left ? -10 : 10), cy)
         g.fillText(name, cx + (left ? -10 : 10), cy)
       }
@@ -246,16 +246,16 @@ export default function Journey() {
 
       // Moving marker with a soft pulse.
       const pulse = (performance.now() / 1200) % 1
-      g.strokeStyle = `rgba(217,83,30,${0.45 * (1 - pulse)})`
+      g.strokeStyle = `rgba(211,138,63,${0.45 * (1 - pulse)})`
       g.lineWidth = 2
       g.beginPath()
       g.arc(hx, hy, 8 + pulse * 16, 0, Math.PI * 2)
       g.stroke()
-      g.fillStyle = '#d9531e'
+      g.fillStyle = '#d38a3f'
       g.beginPath()
       g.arc(hx, hy, 7, 0, Math.PI * 2)
       g.fill()
-      g.strokeStyle = '#f3f4f5'
+      g.strokeStyle = '#f4f4f2'
       g.lineWidth = 2.5
       g.stroke()
     }

@@ -48,7 +48,7 @@ export default function Faq() {
                       </span>
                       <Plus
                         size={20}
-                        strokeWidth={1.75}
+                        strokeWidth={1.25}
                         className={`shrink-0 text-ink motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)] ${isOpen ? 'rotate-[135deg] text-accent' : ''}`}
                       />
                     </button>

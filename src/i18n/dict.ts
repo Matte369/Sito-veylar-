@@ -4,6 +4,7 @@ const en = {
   meta: { title: 'VEYLAR - Energy, Reimagined' },
   nav: {
     technology: 'Technology',
+    design: 'Design',
     figures: 'Figures',
     refuel: 'Refuelling',
     savings: 'Savings',
@@ -19,7 +20,7 @@ const en = {
   },
   stage: {
     aria: 'The VEYLAR platform, explained part by part',
-    eyebrow: 'Electric saloon in development',
+    eyebrow: 'Electric hypercar in development',
     explore: 'Explore the platform',
     railAria: 'Platform chapters',
     rail: { hero: 'Overview', platform: 'Platform', drive: 'Drive', hydrogen: 'Hydrogen', power: 'Power', further: 'Range' },
@@ -61,6 +62,18 @@ const en = {
       waterTank: 'Water',
       power: 'Power electronics',
       battery: 'Battery',
+    },
+  },
+  design: {
+    title: 'Designed to be seen from every angle.',
+    sub: 'Titanium surfaces, a glass canopy and a light signature you recognise in the dark.',
+    note: 'Design study renders.',
+    views: {
+      front: { title: 'Front', body: 'Two blades of light frame the badge in a Y.' },
+      threeQuarter: { title: 'Three-quarter', body: 'Fenders rise over the wheels, the bonnet drops between them.' },
+      top: { title: 'Plan view', body: 'The canopy is one drop of glass, split by a line of light.' },
+      side: { title: 'Profile', body: 'A low wedge, with the cabin set between the axles.' },
+      rear: { title: 'Rear', body: 'One blade of light across the full width.' },
     },
   },
   figures: {
@@ -188,7 +201,7 @@ const en = {
     involved: 'Get involved',
     roadmap: 'Roadmap',
     rights: '© 2026 VEYLAR. Made in Italy.',
-    disclaimer: 'The car shown is an illustrative 3D model. Specifications are in development.',
+    disclaimer: 'Images are design renders and an illustrative 3D model. Specifications are in development.',
   },
   support: {
     title: 'Support VEYLAR.',
@@ -236,6 +249,7 @@ const it: Dict = {
   meta: { title: 'VEYLAR - Energia, ripensata' },
   nav: {
     technology: 'Tecnologia',
+    design: 'Design',
     figures: 'Numeri',
     refuel: 'Rifornimento',
     savings: 'Risparmio',
@@ -251,7 +265,7 @@ const it: Dict = {
   },
   stage: {
     aria: 'La piattaforma VEYLAR, componente per componente',
-    eyebrow: 'Berlina elettrica in sviluppo',
+    eyebrow: 'Hypercar elettrica in sviluppo',
     explore: 'Scopri la piattaforma',
     railAria: 'Capitoli della piattaforma',
     rail: { hero: 'Panoramica', platform: 'Piattaforma', drive: 'Trazione', hydrogen: 'Idrogeno', power: 'Energia', further: 'Autonomia' },
@@ -293,6 +307,18 @@ const it: Dict = {
       waterTank: 'Acqua',
       power: 'Elettronica di potenza',
       battery: 'Batteria',
+    },
+  },
+  design: {
+    title: 'Disegnata per essere guardata da ogni lato.',
+    sub: 'Superfici in titanio, un abitacolo in vetro e una firma luminosa riconoscibile anche al buio.',
+    note: 'Render dello studio di design.',
+    views: {
+      front: { title: 'Frontale', body: 'Due lame di luce incorniciano il logo formando una Y.' },
+      threeQuarter: { title: 'Tre quarti', body: 'I parafanghi salgono sopra le ruote, il cofano scende tra di loro.' },
+      top: { title: 'Vista dall’alto', body: 'L’abitacolo è una goccia di vetro, divisa da una linea di luce.' },
+      side: { title: 'Profilo', body: 'Un cuneo basso, con l’abitacolo tra i due assi.' },
+      rear: { title: 'Posteriore', body: 'Una sola lama di luce per tutta la larghezza.' },
     },
   },
   figures: {
@@ -420,7 +446,7 @@ const it: Dict = {
     involved: 'Partecipa',
     roadmap: 'Roadmap',
     rights: '© 2026 VEYLAR. Made in Italy.',
-    disclaimer: 'L’auto mostrata è un modello 3D illustrativo. Le specifiche sono in sviluppo.',
+    disclaimer: 'Le immagini sono render di design e un modello 3D illustrativo. Le specifiche sono in sviluppo.',
   },
   support: {
     title: 'Sostieni VEYLAR.',
