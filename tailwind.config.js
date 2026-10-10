@@ -4,13 +4,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: '#121213',
-        graphite: '#3a3936',
-        steel: '#6b6a66',
-        mist: '#dcdbd8',
-        paper: '#f4f4f2',
-        accent: '#a8692c',
-        glow: '#f0a454',
+        ink: '#15171a',
+        graphite: '#3b3f45',
+        steel: '#5f656c',
+        mist: '#e2e5e8',
+        paper: '#f3f4f5',
+        accent: '#d9531e',
       },
       fontFamily: {
         sans: ['Archivo', 'Helvetica Neue', 'Arial', 'sans-serif'],

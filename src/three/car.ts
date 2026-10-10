@@ -63,7 +63,7 @@ const palette = {
     clearcoat: 0.8,
     clearcoatRoughness: 0.08,
   }),
-  glass: (): MatOpts => ({ color: '#0c0d0f', metalness: 0.5, roughness: 0.03, clearcoat: 1, envMapIntensity: 1, side: THREE.DoubleSide }),
+  glass: (): MatOpts => ({ color: '#363a40', metalness: 0.65, roughness: 0.07, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 2.4, side: THREE.DoubleSide }),
   trim: (): MatOpts => ({ color: '#2a2d31', metalness: 0.4, roughness: 0.55 }),
   graphite: (): MatOpts => ({ color: '#3b3f45', metalness: 0.7, roughness: 0.4 }),
   aluminium: (): MatOpts => ({ color: '#c3c7cc', metalness: 0.9, roughness: 0.35 }),
@@ -104,13 +104,13 @@ const ARCH = 0.43
 
 // Proportions read off the VEYLAR design board (side, top, front and rear views).
 const halfWidth = profile([
-  [-2.3, 0.88], [-2.0, 0.98], [-1.45, 1.03], [-0.9, 0.99], [-0.2, 0.93], [0.6, 0.92], [1.45, 0.99], [1.95, 0.9], [2.3, 0.56],
+  [-2.3, 0.9], [-2.0, 0.98], [-1.45, 1.03], [-0.9, 0.99], [-0.2, 0.93], [0.6, 0.92], [1.45, 0.97], [1.95, 0.9], [2.3, 0.6],
 ])
 const shoulder = profile([
-  [-2.3, 0.86], [-2.0, 0.9], [-1.5, 0.93], [-0.9, 0.84], [0.2, 0.71], [0.9, 0.73], [1.5, 0.79], [1.95, 0.58], [2.3, 0.3],
+  [-2.3, 0.86], [-2.0, 0.9], [-1.5, 0.93], [-0.9, 0.84], [0.2, 0.71], [0.9, 0.72], [1.45, 0.75], [1.95, 0.56], [2.3, 0.3],
 ])
 const centre = profile([
-  [-2.3, 0.86], [-1.9, 0.9], [-1.2, 0.88], [-0.9, 0.72], [0.9, 0.7], [1.15, 0.66], [1.6, 0.6], [2.0, 0.47], [2.3, 0.27],
+  [-2.3, 0.86], [-1.9, 0.9], [-1.2, 0.88], [-0.9, 0.72], [0.9, 0.7], [1.15, 0.66], [1.6, 0.6], [2.0, 0.47], [2.18, 0.36], [2.3, 0.25],
 ])
 
 function archTop(x: number) {
@@ -124,10 +124,11 @@ function archTop(x: number) {
 
 /** Half cross-section at x, from bottom centre round the flank to top centre. [z, y] */
 function section(x: number): [number, number][] {
-  const W = halfWidth(x)
+  const tuck = Math.max(0, (-2.16 - x) / 0.14) // 0 → 1 over the last 14 cm of the tail
+  const W = halfWidth(x) * (1 - 0.16 * tuck * tuck)
   const a = archTop(x)
   const c = centre(x)
-  const sh = Math.max(shoulder(x), a + 0.16)
+  const sh = Math.max(shoulder(x), a + 0.16) - 0.07 * tuck * tuck
   const inner = Math.min(0.64, W * 0.7)
   const lo = a + 0.045
   const hi = sh - 0.06
@@ -140,7 +141,7 @@ function section(x: number): [number, number][] {
     [W * 1.004, (lo + hi) / 2],
     [W * 0.985, hi],
     [W * 0.945, sh],
-    [W * 0.74, sh + 0.035],
+    [W * 0.74, sh + (x > 1.0 ? 0.02 : 0.035)],
     [W * 0.42, Math.max(c, sh - 0.12) + 0.03],
     [W * 0.16, c + 0.006],
     [0, c],
@@ -148,6 +149,8 @@ function section(x: number): [number, number][] {
 }
 /** Segments of the half-section drawn in satin black (floor, wheel wells, lower lip). */
 const BLACK_SEGMENTS = new Set([0, 1, 2, 3])
+/** Lower flank turns black at the nose (intakes) and the tail (diffuser). */
+const isBlack = (seg: number, x: number) => BLACK_SEGMENTS.has(seg) || (seg === 4 && (x > 1.86 || x < -1.98)) || (seg === 5 && x > 2.02)
 
 /** Top surface height at (x, |z|), interpolated along the upper part of the section. */
 function topY(x: number, z: number) {
@@ -178,10 +181,12 @@ function loftBody(stations: number) {
   const paintIdx: number[] = []
   const blackIdx: number[] = []
   let ringSize = 0
+  const xs: number[] = []
   for (let i = 0; i <= stations; i++) {
     const t = i / stations
     // Denser stations near the ends and the arches come from easing t.
     const x = TAIL + (NOSE - TAIL) * (0.5 - 0.5 * Math.cos(Math.PI * t))
+    xs.push(x)
     const half = section(x)
     const ring = [...half, ...half.slice(1, -1).reverse().map(([z, y]) => [-z, y] as [number, number])]
     ringSize = ring.length
@@ -195,7 +200,7 @@ function loftBody(stations: number) {
       const c = a + ringSize
       const d = b + ringSize
       const seg = j < halfSeg ? j : ringSize - 1 - j
-      const target = BLACK_SEGMENTS.has(seg) ? blackIdx : paintIdx
+      const target = isBlack(seg, (xs[i] + xs[i + 1]) / 2) ? blackIdx : paintIdx
       target.push(a, c, b, b, c, d)
     }
   }
@@ -221,7 +226,7 @@ function loftBody(stations: number) {
   geo.setIndex([...paintIdx, ...blackIdx])
   geo.addGroup(0, paintIdx.length, 0)
   geo.addGroup(paintIdx.length, blackIdx.length, 1)
-  return toCreasedNormals(geo, 0.5)
+  return toCreasedNormals(geo, 0.38)
 }
 
 /** Canopy bubble: superellipse sections along a teardrop plan. */
@@ -254,7 +259,7 @@ function canopy() {
   geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
   geo.setIndex(idx)
   geo.computeVertexNormals()
-  return { geo, top }
+  return { geo, top, width }
 }
 
 function tube(points: THREE.Vector3[], radius: number, mat: THREE.Material, closed = false) {
@@ -353,6 +358,12 @@ function bodyShell(materials: THREE.MeshPhysicalMaterial[]) {
   g.add(new THREE.Mesh(loftBody(180), [paint, black]))
   const cab = canopy()
   g.add(new THREE.Mesh(cab.geo, glass))
+  // Titanium frame where the canopy meets the body.
+  for (const side of [1, -1]) {
+    const rim: THREE.Vector3[] = []
+    for (let x = -1.1; x <= 1.1; x += 0.05) rim.push(new THREE.Vector3(x, centre(x) - 0.02, side * cab.width(x)))
+    g.add(tube(rim, 0.018, paint))
+  }
 
   for (const side of [1, -1] as const) {
     g.add(sideIntake(side, intake))
@@ -403,12 +414,6 @@ function bodyShell(materials: THREE.MeshPhysicalMaterial[]) {
   const fascia = new THREE.Mesh(new RoundedBoxGeometry(0.08, 0.17, halfWidth(TAIL) * 2 - 0.02, 3, 0.03), paint)
   fascia.position.set(TAIL - 0.005, shoulder(TAIL) - 0.06, 0)
   g.add(fascia)
-  for (const side of [1, -1]) {
-    const flank = new THREE.Mesh(new RoundedBoxGeometry(0.08, 0.5, 0.16, 3, 0.03), paint)
-    flank.position.set(TAIL - 0.005, 0.5, side * (halfWidth(TAIL) - 0.09))
-    flank.rotation.x = side * 0.25
-    g.add(flank)
-  }
   const bar = [-0.92, -0.7, -0.4, 0, 0.4, 0.7, 0.92].map((z) => new THREE.Vector3(TAIL - 0.05, 0.69 + (Math.abs(z) > 0.6 ? (Math.abs(z) - 0.6) * 0.35 : 0), z * halfWidth(TAIL)))
   g.add(tube(bar, 0.012, amber))
   g.add(tube([new THREE.Vector3(TAIL - 0.01, 0.5, 0), new THREE.Vector3(TAIL - 0.01, 0.22, 0)], 0.011, amber))

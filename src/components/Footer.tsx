@@ -32,7 +32,7 @@ export default function Footer() {
     },
   ]
   return (
-    <footer className="bg-paper">
+    <footer className="border-t border-ink/10 bg-paper">
       <div className="mx-auto grid max-w-[1440px] gap-12 px-5 py-16 sm:px-8 md:grid-cols-[5fr_7fr] md:px-12">
         <div>
           <Logo />
@@ -55,11 +55,6 @@ export default function Footer() {
             </div>
           ))}
         </div>
-      </div>
-      <div aria-hidden="true" className="mx-auto max-w-[1440px] overflow-hidden px-5 sm:px-8 md:px-12">
-        <p className="-mb-[0.18em] select-none whitespace-nowrap text-center font-wide text-[clamp(3.5rem,15.5vw,15rem)] font-medium leading-none tracking-[0.38em] text-ink/[0.07]">
-          VEYLAR
-        </p>
       </div>
       <div className="mx-auto flex max-w-[1440px] flex-col gap-2 border-t border-ink/10 px-5 py-6 text-xs text-steel sm:px-8 md:flex-row md:justify-between md:px-12">
         <p>{t.footer.rights}</p>

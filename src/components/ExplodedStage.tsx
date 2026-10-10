@@ -1,13 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, ButtonLink } from './Button'
+import { ArrowRight } from 'lucide-react'
 import { CHAPTERS, chapterWeight, VeylarStage, type ChapterId } from '../three/stage'
 import { useLang } from '../i18n'
 import { scrollToTarget } from '../lib/motion'
 import RevealText from './RevealText'
-
-/** Fades all four edges of the render so it sits inside the studio. */
-const FEATHER =
-  'linear-gradient(to right, transparent, #000 16%, #000 86%, transparent), linear-gradient(to bottom, transparent, #000 14%, #000 78%, transparent)'
 
 const RAIL: ChapterId[] = ['hero', 'platform', 'drive', 'hydrogen', 'power', 'further']
 const LABELS = CHAPTERS.flatMap((c) => c.labels.map((l) => ({ ...l, chapter: c.id, key: `${c.id}-${l.part}` })))
@@ -23,8 +19,6 @@ export default function ExplodedStage() {
   const chapterRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const labelRefs = useRef<Record<string, HTMLDivElement | null>>({})
   const railRefs = useRef<Record<string, HTMLButtonElement | null>>({})
-  const wordRef = useRef<HTMLDivElement>(null)
-  const heroRef = useRef<HTMLDivElement>(null)
   const [webgl, setWebgl] = useState(true)
   const [ready, setReady] = useState(false)
 
@@ -67,17 +61,6 @@ export default function ExplodedStage() {
       const p = smoothed
 
       stage.update(p, (now - start) / 1000, !reduce)
-      // The design render opens the page, then dissolves into the 3D model.
-      const reveal = Math.min(1, Math.max(0, (p - 0.012) / 0.05))
-      if (heroRef.current) {
-        heroRef.current.style.opacity = String(1 - reveal)
-        heroRef.current.style.scale = String(1 + reveal * 0.04)
-      }
-      canvas.style.opacity = String(reveal)
-      if (wordRef.current) {
-        wordRef.current.style.opacity = String(1 - Math.min(1, p / 0.08))
-        wordRef.current.style.translate = `0 ${-p * 400}px`
-      }
       if (first) {
         first = false
         setReady(true)
@@ -136,47 +119,22 @@ export default function ExplodedStage() {
     scrollToTarget(section.offsetTop + total * Math.min(1, mid))
   }
 
+  const primary =
+    'group inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-medium text-paper transition-colors duration-300 hover:bg-graphite active:scale-[0.98]'
+  const secondary =
+    'inline-flex items-center rounded-full border border-ink/20 px-6 py-3 text-sm font-medium text-ink transition-colors duration-300 hover:border-ink/40 hover:bg-ink/5 active:scale-[0.98]'
+  const arrow = <ArrowRight size={16} strokeWidth={1.75} className="transition-transform duration-300 group-hover:translate-x-1" />
+
   return (
     <section id="technology" ref={sectionRef} aria-label={t.stage.aria} className={webgl ? 'relative h-[620vh]' : 'relative'}>
       <div id="top" className={`studio overflow-hidden ${webgl ? 'sticky top-0 h-[100dvh]' : 'min-h-[100dvh] pt-24'}`}>
-        {/* Oversized wordmark behind the car, fading as the story starts. */}
-        <div
-          ref={wordRef}
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-[18%] flex select-none justify-center motion-safe:animate-[fadeUp_1400ms_100ms_both] min-[900px]:top-[14%]"
-        >
-          <span className="whitespace-nowrap pl-[0.5em] font-wide text-[clamp(4.5rem,17vw,17rem)] font-medium leading-none tracking-[0.5em] text-paper/25">
-            VEYLAR
-          </span>
-        </div>
         <canvas
           ref={canvasRef}
-          style={{ opacity: 0 }}
-          className="absolute inset-0 h-full w-full"
+          className={`absolute inset-0 h-full w-full motion-safe:transition-[opacity,transform] motion-safe:duration-[1400ms] motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            ready ? 'scale-100 opacity-100' : 'motion-safe:scale-[1.04] opacity-0'
+          }`}
           aria-hidden="true"
         />
-
-        {/* Design render: the first thing you see. Its edges are feathered into the studio. */}
-        <div
-          ref={heroRef}
-          className="pointer-events-none absolute inset-x-0 top-[14%] mx-auto w-[min(108vw,760px)] will-change-[opacity] min-[900px]:inset-x-auto min-[900px]:right-[7%] min-[900px]:top-1/2 min-[900px]:w-[min(56vw,1060px)] min-[900px]:-translate-y-1/2"
-        >
-          <img
-            src="design/hero.jpg"
-            alt="VEYLAR"
-            width={1388}
-            height={430}
-            className={`h-auto w-full motion-safe:transition-[opacity,transform] motion-safe:duration-[1600ms] motion-safe:ease-out-expo ${
-              ready ? 'translate-x-0 opacity-100' : 'motion-safe:translate-x-10 opacity-0'
-            }`}
-            style={{
-              maskImage: FEATHER,
-              WebkitMaskImage: FEATHER,
-              maskComposite: 'intersect',
-              WebkitMaskComposite: 'source-in',
-            }}
-          />
-        </div>
 
         {/* Component labels, positioned from the 3D scene every frame. */}
         <div className="pointer-events-none absolute inset-0" aria-hidden="true">
@@ -216,7 +174,7 @@ export default function ExplodedStage() {
               >
                 <div className="pointer-events-auto rounded-2xl bg-paper/80 p-5 backdrop-blur-md min-[900px]:bg-transparent min-[900px]:p-0 min-[900px]:backdrop-blur-0">
                   {isHero && (
-                    <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.16em] text-ink/60 motion-safe:animate-[fadeUp_900ms_200ms_both]">
+                    <p className="mb-5 font-mono text-[11px] uppercase tracking-[0.16em] text-steel motion-safe:animate-[fadeUp_900ms_200ms_both]">
                       {t.stage.eyebrow}
                     </p>
                   )}
@@ -234,7 +192,7 @@ export default function ExplodedStage() {
                     </h2>
                   )}
                   <p
-                    className={`mt-4 max-w-[26rem] text-base leading-relaxed text-ink/75 sm:text-lg ${
+                    className={`mt-4 max-w-[26rem] text-base leading-relaxed text-graphite sm:text-lg ${
                       isHero ? 'motion-safe:animate-[fadeUp_900ms_650ms_both]' : ''
                     }`}
                   >
@@ -243,13 +201,19 @@ export default function ExplodedStage() {
                   {(isHero || isLast) && (
                     <div className={`mt-7 flex flex-wrap gap-3 ${isHero ? 'motion-safe:animate-[fadeUp_900ms_800ms_both]' : ''}`}>
                       {isHero ? (
-                        <Button onClick={() => jumpTo('platform')}>{t.stage.explore}</Button>
+                        <button type="button" onClick={() => jumpTo('platform')} className={primary}>
+                          {t.stage.explore}
+                          {arrow}
+                        </button>
                       ) : (
-                        <ButtonLink href="#support">{t.nav.support}</ButtonLink>
+                        <a href="#support" className={primary}>
+                          {t.nav.support}
+                          {arrow}
+                        </a>
                       )}
-                      <ButtonLink href={isHero ? '#support' : '#contact'} variant="ghost" icon={null}>
+                      <a href={isHero ? '#support' : '#contact'} className={secondary}>
                         {isHero ? t.nav.support : t.nav.contact}
-                      </ButtonLink>
+                      </a>
                     </div>
                   )}
                 </div>

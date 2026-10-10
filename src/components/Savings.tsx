@@ -72,8 +72,7 @@ export default function Savings() {
         </Reveal>
       </div>
 
-      <Reveal delay={150} className="mt-16 rounded-[2.25rem] bg-ink/[0.03] p-1.5 ring-1 ring-ink/[0.06]">
-        <div className="grid gap-12 rounded-[calc(2.25rem-0.375rem)] bg-paper p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)] sm:p-10 lg:grid-cols-[5fr_7fr] lg:gap-16 lg:p-14">
+      <Reveal delay={150} className="mt-16 grid gap-12 rounded-3xl bg-paper p-6 sm:p-10 lg:grid-cols-[5fr_7fr] lg:gap-16 lg:p-14">
         <div className="flex flex-col gap-10">
           <div>
             <label htmlFor={sliderId} className="text-sm text-graphite">
@@ -133,7 +132,6 @@ export default function Savings() {
               </div>
             ))}
           </div>
-        </div>
         </div>
       </Reveal>
 

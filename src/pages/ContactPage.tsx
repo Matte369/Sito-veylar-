@@ -1,6 +1,5 @@
 import { useId, useState, type FormEvent } from 'react'
-import { Check, Copy } from 'lucide-react'
-import { Button } from '../components/Button'
+import { ArrowRight, Check, Copy } from 'lucide-react'
 import Reveal from '../components/Reveal'
 import { CONTACT_EMAIL, FORM_ENDPOINT } from '../config'
 import RevealText from '../components/RevealText'
@@ -10,7 +9,7 @@ type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent' } | { kind
 type Errors = Partial<Record<'name' | 'email' | 'message' | 'consent', string>>
 
 const inputClass =
-  'w-full rounded-2xl border border-ink/15 bg-paper px-4 py-3 text-ink outline-none transition-colors duration-200 placeholder:text-steel/80 focus:border-ink aria-[invalid=true]:border-accent'
+  'w-full rounded-xl border border-ink/20 bg-paper px-4 py-3 text-ink outline-none transition-colors duration-200 placeholder:text-steel/80 focus:border-ink aria-[invalid=true]:border-accent'
 
 export default function ContactPage() {
   const { t } = useLang()
@@ -118,7 +117,7 @@ export default function ContactPage() {
                 aria-label={copied ? c.copied : c.copy}
                 className="flex h-9 w-9 items-center justify-center rounded-full text-graphite hover:bg-ink/5 hover:text-ink"
               >
-                {copied ? <Check size={16} strokeWidth={1.25} /> : <Copy size={16} strokeWidth={1.25} />}
+                {copied ? <Check size={16} strokeWidth={1.75} /> : <Copy size={16} strokeWidth={1.75} />}
               </button>
             </div>
           </div>
@@ -127,7 +126,7 @@ export default function ContactPage() {
         <Reveal delay={120}>
           {status.kind === 'sent' ? (
             <div className="rounded-3xl bg-paper p-8 sm:p-12" role="status">
-              <Check size={28} strokeWidth={1.25} className="text-accent" />
+              <Check size={28} strokeWidth={1.75} className="text-accent" />
               <h2 className="mt-6 font-wide text-3xl font-medium text-ink">{c.sentTitle}</h2>
               <p className="mt-3 max-w-[28rem] leading-relaxed text-graphite">
                 {fill(c.sentBody, { email: sentTo })}
@@ -141,8 +140,7 @@ export default function ContactPage() {
               </button>
             </div>
           ) : (
-            <div className="rounded-[2rem] bg-ink/[0.03] p-1.5 ring-1 ring-ink/[0.06]">
-            <form noValidate onSubmit={onSubmit} className="grid gap-6 rounded-[calc(2rem-0.375rem)] bg-paper p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)] sm:p-10">
+            <form noValidate onSubmit={onSubmit} className="grid gap-6 rounded-3xl bg-paper p-6 sm:p-10">
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="flex flex-col gap-2">
                   <label htmlFor={`${id}-name`} className="text-sm font-medium text-ink">
@@ -198,11 +196,15 @@ export default function ContactPage() {
                 </p>
               )}
 
-              <Button type="submit" disabled={status.kind === 'sending'} icon={status.kind === 'sending' ? null : 'right'} className="justify-self-start">
+              <button
+                type="submit"
+                disabled={status.kind === 'sending'}
+                className="group inline-flex items-center justify-center gap-2 justify-self-start rounded-full bg-ink px-8 py-4 text-base font-medium text-paper transition-colors duration-300 hover:bg-graphite active:scale-[0.98] disabled:cursor-wait disabled:bg-ink/60"
+              >
                 {status.kind === 'sending' ? c.sending : c.send}
-              </Button>
+                {status.kind !== 'sending' && <ArrowRight size={18} strokeWidth={1.75} className="transition-transform duration-300 group-hover:translate-x-1" />}
+              </button>
             </form>
-            </div>
           )}
         </Reveal>
       </section>
