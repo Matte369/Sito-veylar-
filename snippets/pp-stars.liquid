@@ -1,0 +1,30 @@
+{%- comment -%}
+  Stelle di valutazione. Parametri: rating (decimale), max (default 5), size ('lg'), uid (id univoco per i gradienti mezza-stella)
+{%- endcomment -%}
+{%- liquid
+  assign max = max | default: 5
+  assign rounded = rating | times: 2 | round | divided_by: 2.0
+-%}
+<span class="pp-stars{% if size == 'lg' %} pp-stars--lg{% endif %}" role="img" aria-label="{{ rating | round: 1 }} / {{ max }}">
+  {%- for i in (1..max) -%}
+    {%- liquid
+      assign idx = i | times: 1.0
+      assign half_idx = idx | minus: 0.5
+      if rounded >= idx
+        assign state = 'full'
+      elsif rounded >= half_idx
+        assign state = 'half'
+      else
+        assign state = 'empty'
+      endif
+    -%}
+    <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false" {% if state == 'empty' %}class="is-empty"{% endif %}>
+      {%- if state == 'half' -%}
+        <defs><linearGradient id="pp-half-{{ uid | default: section.id }}-{{ i }}"><stop offset="50%" stop-color="currentColor"/><stop offset="50%" stop-color="#E8D8CE"/></linearGradient></defs>
+        <path fill="url(#pp-half-{{ uid | default: section.id }}-{{ i }})" d="M10 1.6l2.5 5.4 5.9.7-4.4 4 1.2 5.8L10 14.6l-5.2 2.9L6 11.7 1.6 7.7l5.9-.7z"/>
+      {%- else -%}
+        <path fill="currentColor" d="M10 1.6l2.5 5.4 5.9.7-4.4 4 1.2 5.8L10 14.6l-5.2 2.9L6 11.7 1.6 7.7l5.9-.7z"/>
+      {%- endif -%}
+    </svg>
+  {%- endfor -%}
+</span>

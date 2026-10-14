@@ -1,0 +1,174 @@
+{%- comment -%}
+  ===========================================================================
+  PRIMO PASSO · Brand Story & Valori — "Perché PRIMO PASSO"
+  ---------------------------------------------------------------------------
+  Layout asimmetrico: composizione di due immagini ad arco (con parallax)
+  e sigillo rotante a sinistra; storia, pilastri (blocchi) e numeri a destra.
+  ===========================================================================
+{%- endcomment -%}
+{% render 'pp-assets' %}
+{%- assign s = section.settings -%}
+
+<section
+  id="{{ s.anchor | default: section.id | handleize }}"
+  class="pp-scope pp-section pp-story{% if s.reverse %} pp-story--reverse{% endif %}"
+  style="--pp-section-bg: {{ s.background }};"
+  aria-labelledby="pp-story-title-{{ section.id }}"
+>
+  <div class="pp-container pp-story__grid">
+
+    {%- comment -%} Composizione immagini ad arco {%- endcomment -%}
+    <div class="pp-story__media">
+      <div class="pp-story__arch-main pp-arch pp-arch--full pp-reveal">
+        <div class="pp-parallax" data-pp-parallax="0.18">
+          {%- if s.image_main != blank -%}
+            {{ s.image_main | image_url: width: 1400 | image_tag: loading: 'lazy', widths: '540, 720, 960, 1200, 1400', sizes: '(min-width: 990px) 34vw, 66vw', alt: s.image_main.alt | default: 'Mamma e neonato con prodotti PRIMO PASSO' }}
+          {%- else -%}
+            {{ 'lifestyle-1' | placeholder_svg_tag: 'placeholder-svg' }}
+          {%- endif -%}
+        </div>
+      </div>
+      <div class="pp-story__arch-sub pp-arch pp-arch--full pp-reveal" style="--pp-delay: 2">
+        <div class="pp-parallax" data-pp-parallax="0.32">
+          {%- if s.image_sub != blank -%}
+            {{ s.image_sub | image_url: width: 900 | image_tag: loading: 'lazy', widths: '360, 540, 720, 900', sizes: '(min-width: 990px) 24vw, 46vw', alt: s.image_sub.alt | default: 'Dettaglio tessuto in cotone organico' }}
+          {%- else -%}
+            {{ 'lifestyle-2' | placeholder_svg_tag: 'placeholder-svg' }}
+          {%- endif -%}
+        </div>
+      </div>
+      {%- if s.seal_text != blank -%}
+        {%- comment -%} Sigillo circolare rotante con testo su path {%- endcomment -%}
+        <svg class="pp-story__seal" viewBox="0 0 132 132" aria-hidden="true" focusable="false">
+          <defs><path id="pp-seal-path-{{ section.id }}" d="M66,66 m-52,0 a52,52 0 1,1 104,0 a52,52 0 1,1 -104,0"/></defs>
+          <circle cx="66" cy="66" r="65" fill="#FDFBF7"/>
+          <text font-family="Plus Jakarta Sans, sans-serif" font-size="10.4" font-weight="700" letter-spacing="3.1" fill="currentColor">
+            <textPath href="#pp-seal-path-{{ section.id }}">{{ s.seal_text | upcase }}</textPath>
+          </text>
+        </svg>
+        <span class="pp-story__seal-core" aria-hidden="true">{% render 'pp-footprint' %}</span>
+      {%- endif -%}
+    </div>
+
+    {%- comment -%} Contenuto {%- endcomment -%}
+    <div class="pp-story__content">
+      {%- if s.eyebrow != blank -%}<span class="pp-eyebrow pp-reveal">{{ s.eyebrow }}</span>{%- endif -%}
+      <h2 id="pp-story-title-{{ section.id }}" class="pp-section-head__title pp-reveal" style="--pp-delay: 1">{{ s.heading }}</h2>
+      {%- if s.text != blank -%}<div class="pp-story__text pp-reveal" style="--pp-delay: 2">{{ s.text }}</div>{%- endif -%}
+      {%- if s.signature != blank -%}<p class="pp-story__signature pp-reveal" style="--pp-delay: 3">{{ s.signature }}</p>{%- endif -%}
+
+      {%- if section.blocks.size > 0 -%}
+        <ul class="pp-pillars" role="list">
+          {%- for block in section.blocks -%}
+            <li class="pp-pillar pp-reveal" style="--pp-delay: {{ forloop.index | plus: 2 }}" {{ block.shopify_attributes }}>
+              <span class="pp-pillar__icon">{% render 'pp-icon', icon: block.settings.icon %}</span>
+              <div>
+                <h3 class="pp-pillar__title">{{ block.settings.title }}</h3>
+                <p class="pp-pillar__text">{{ block.settings.text }}</p>
+              </div>
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+
+      {%- if s.button_label != blank -%}
+        <a class="pp-btn pp-reveal" href="{{ s.button_link | default: routes.all_products_collection_url }}">
+          {{ s.button_label }}<span class="pp-btn__icon">{% render 'pp-icon', icon: 'arrow-right' %}</span>
+        </a>
+      {%- endif -%}
+
+      {%- if s.show_stats -%}
+        <div class="pp-stats">
+          {%- for n in (1..3) -%}
+            {%- liquid
+              assign v_key = 'stat' | append: n | append: '_value'
+              assign l_key = 'stat' | append: n | append: '_label'
+              assign sx_key = 'stat' | append: n | append: '_suffix'
+              assign v = s[v_key]
+            -%}
+            {%- if v != blank -%}
+              {%- assign dec = 0 -%}
+              {%- if v contains '.' -%}{%- assign dec = 1 -%}{%- endif -%}
+              <div class="pp-stat pp-reveal" style="--pp-delay: {{ n }}">
+                <strong data-pp-count-to="{{ v }}" data-pp-decimals="{{ dec }}" data-pp-suffix="{{ s[sx_key] }}">{{ v }}{{ s[sx_key] }}</strong>
+                <span>{{ s[l_key] }}</span>
+              </div>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "PP · Perché Primo Passo",
+  "tag": "div",
+  "class": "pp-section-story",
+  "max_blocks": 4,
+  "settings": [
+    { "type": "text", "id": "anchor", "label": "Ancora (ID link menu)", "default": "chi-siamo", "info": "Linkabile dal menu con /#chi-siamo" },
+    { "type": "image_picker", "id": "image_main", "label": "Immagine ad arco principale" },
+    { "type": "image_picker", "id": "image_sub", "label": "Immagine ad arco secondaria" },
+    { "type": "text", "id": "seal_text", "label": "Testo sigillo rotante", "default": "Cotone organico · Fatto con amore · " },
+    { "type": "checkbox", "id": "reverse", "label": "Immagini a destra", "default": false },
+
+    { "type": "header", "content": "Testo" },
+    { "type": "text", "id": "eyebrow", "label": "Occhiello", "default": "Perché PRIMO PASSO" },
+    { "type": "inline_richtext", "id": "heading", "label": "Titolo", "default": "Nati da genitori, <em>pensati</em> per i più piccoli" },
+    { "type": "richtext", "id": "text", "label": "Storia", "default": "<p>PRIMO PASSO nasce in un piccolo laboratorio italiano, dalla ricerca di prodotti per la prima infanzia che fossero davvero sicuri, belli e sostenibili.</p><p>Selezioniamo solo fibre naturali certificate, collaboriamo con pediatri e ostetriche per ogni nuovo design e confezioniamo tutto in packaging 100% compostabile.</p>" },
+    { "type": "text", "id": "signature", "label": "Firma", "default": "— Giulia & Marco, fondatori" },
+    { "type": "text", "id": "button_label", "label": "Pulsante", "default": "Scopri la nostra filosofia" },
+    { "type": "url", "id": "button_link", "label": "Link pulsante" },
+
+    { "type": "header", "content": "Numeri" },
+    { "type": "checkbox", "id": "show_stats", "label": "Mostra numeri", "default": true },
+    { "type": "text", "id": "stat1_value", "label": "Numero 1", "default": "12000" },
+    { "type": "text", "id": "stat1_suffix", "label": "Suffisso 1", "default": "+" },
+    { "type": "text", "id": "stat1_label", "label": "Etichetta 1", "default": "Famiglie felici" },
+    { "type": "text", "id": "stat2_value", "label": "Numero 2", "default": "100" },
+    { "type": "text", "id": "stat2_suffix", "label": "Suffisso 2", "default": "%" },
+    { "type": "text", "id": "stat2_label", "label": "Etichetta 2", "default": "Fibre naturali" },
+    { "type": "text", "id": "stat3_value", "label": "Numero 3", "default": "4.9" },
+    { "type": "text", "id": "stat3_suffix", "label": "Suffisso 3", "default": "/5" },
+    { "type": "text", "id": "stat3_label", "label": "Etichetta 3", "default": "Valutazione media" },
+
+    { "type": "color", "id": "background", "label": "Sfondo sezione", "default": "#F7F3EE" }
+  ],
+  "blocks": [
+    {
+      "type": "pillar",
+      "name": "Pilastro",
+      "settings": [
+        {
+          "type": "select", "id": "icon", "label": "Icona", "default": "cotton",
+          "options": [
+            { "value": "cotton", "label": "Cotone" },
+            { "value": "leaf", "label": "Foglia / Eco" },
+            { "value": "shield", "label": "Scudo / Certificato" },
+            { "value": "ruler", "label": "Ergonomia" },
+            { "value": "truck", "label": "Spedizione" },
+            { "value": "return", "label": "Reso" },
+            { "value": "heart", "label": "Cuore" },
+            { "value": "gift", "label": "Regalo" },
+            { "value": "footprint", "label": "Piedino" }
+          ]
+        },
+        { "type": "text", "id": "title", "label": "Titolo", "default": "100% Cotone Organico" },
+        { "type": "textarea", "id": "text", "label": "Testo", "default": "Certificato GOTS, senza sostanze nocive: delicato anche sulle pelli più sensibili." }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "PP · Perché Primo Passo",
+      "blocks": [
+        { "type": "pillar", "settings": { "icon": "cotton", "title": "100% Cotone Organico", "text": "Certificato GOTS e OEKO-TEX®, senza sostanze nocive: delicato anche sulle pelli più sensibili." } },
+        { "type": "pillar", "settings": { "icon": "shield", "title": "Design Ergonomico Certificato", "text": "Sviluppato con pediatri e testato secondo le norme europee EN 71 per la sicurezza dei bambini." } },
+        { "type": "pillar", "settings": { "icon": "truck", "title": "Spedizione Gratuita e Reso Facile", "text": "Consegna gratuita da 50€ in 24/48h e reso semplice entro 30 giorni, senza domande." } }
+      ]
+    }
+  ]
+}
+{% endschema %}

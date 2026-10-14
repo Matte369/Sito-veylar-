@@ -1,0 +1,15 @@
+{
+  "type": "footer",
+  "name": "Footer group",
+  "sections": {
+    "pp-footer": {
+      "type": "pp-footer",
+      "settings": {
+        "menu_1": "footer",
+        "heading_1": "Esplora",
+        "heading_2": "Assistenza"
+      }
+    }
+  },
+  "order": ["pp-footer"]
+}

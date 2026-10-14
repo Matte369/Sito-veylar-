@@ -1,0 +1,62 @@
+/*
+ * PRIMO PASSO · Homepage (Online Store 2.0 JSON template)
+ * Ordine: Hero 3D → Best Seller ad arco → Perché Primo Passo → Recensioni → Contatti & Newsletter
+ * Header e Footer vivono nei gruppi di sezioni (sections/header-group.json, sections/footer-group.json).
+ */
+{
+  "sections": {
+    "hero": {
+      "type": "hero-3d-homepage",
+      "settings": {
+        "eyebrow": "Nuova collezione · Cotone organico GOTS",
+        "title": "I primi passi del tuo bambino, guidati con amore e stile.",
+        "title_highlight": "amore,stile",
+        "button_label": "Esplora la Collezione",
+        "button_link": "shopify://collections/all",
+        "button2_label": "La nostra storia",
+        "button2_link": "/#chi-siamo",
+        "enable_3d": true,
+        "time_of_day": "golden",
+        "camera_intensity": 5,
+        "scroll_travel": 6
+      }
+    },
+    "bestseller": {
+      "type": "featured-products-arch",
+      "settings": {
+        "heading": "I nostri <em>Best Seller</em>",
+        "products_to_show": 8,
+        "columns_desktop": 4,
+        "mobile_layout": "carousel",
+        "enable_quick_add": true
+      }
+    },
+    "story": {
+      "type": "brand-story-arch",
+      "blocks": {
+        "pillar-1": { "type": "pillar", "settings": { "icon": "cotton", "title": "100% Cotone Organico", "text": "Certificato GOTS e OEKO-TEX®, senza sostanze nocive: delicato anche sulle pelli più sensibili." } },
+        "pillar-2": { "type": "pillar", "settings": { "icon": "shield", "title": "Design Ergonomico Certificato", "text": "Sviluppato con pediatri e testato secondo le norme europee EN 71 per la sicurezza dei bambini." } },
+        "pillar-3": { "type": "pillar", "settings": { "icon": "truck", "title": "Spedizione Gratuita e Reso Facile", "text": "Consegna gratuita da 50€ in 24/48h e reso semplice entro 30 giorni, senza domande." } }
+      },
+      "block_order": ["pillar-1", "pillar-2", "pillar-3"],
+      "settings": {}
+    },
+    "reviews": {
+      "type": "reviews-social-proof",
+      "blocks": {
+        "review-1": { "type": "review", "settings": { "rating": 5, "title": "Morbidissimo, lo rifarei subito", "author": "Giulia R.", "location": "Milano", "product_name": "Body in Cotone Organico", "verified": true, "text": "<p>Il body in cotone organico è delicatissimo: nessun arrossamento, lavaggio dopo lavaggio. Si vede la cura in ogni cucitura.</p>" } },
+        "review-2": { "type": "review", "settings": { "rating": 5, "title": "Il regalo più apprezzato", "author": "Francesca M.", "location": "Bologna", "product_name": "Copertina Mussola Nuvola", "verified": true, "text": "<p>L'ho regalata a mia sorella per la nascita di Leo: packaging bellissimo e la mussola diventa ancora più morbida con i lavaggi.</p>" } },
+        "review-3": { "type": "review", "settings": { "rating": 5, "title": "Primi passi sicuri", "author": "Luca e Sara", "location": "Torino", "product_name": "Scarpine Primi Passi", "verified": true, "text": "<p>Suola flessibile e antiscivolo, Emma le indossa volentieri e non le toglie mai. Spedizione arrivata in 24 ore!</p>" } },
+        "review-4": { "type": "review", "settings": { "rating": 5, "title": "Il suo compagno di nanna", "author": "Chiara B.", "location": "Roma", "product_name": "Peluche Orsetto Panna", "verified": true, "text": "<p>Materiali naturali e cuciture robuste: finalmente un peluche di cui mi fido. Mio figlio non si addormenta più senza.</p>" } },
+        "review-5": { "type": "review", "settings": { "rating": 4, "title": "Qualità che si sente", "author": "Elena T.", "location": "Firenze", "product_name": "Sacco Nanna Avorio", "verified": true, "text": "<p>Tessuto traspirante, zip protetta e taglie generose. Assistenza su WhatsApp gentilissima per la scelta della misura.</p>" } }
+      },
+      "block_order": ["review-1", "review-2", "review-3", "review-4", "review-5"],
+      "settings": {}
+    },
+    "contact": {
+      "type": "contact-newsletter",
+      "settings": {}
+    }
+  },
+  "order": ["hero", "bestseller", "story", "reviews", "contact"]
+}

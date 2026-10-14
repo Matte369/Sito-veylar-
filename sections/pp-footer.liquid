@@ -1,0 +1,124 @@
+{%- comment -%}
+  ===========================================================================
+  PRIMO PASSO · Footer completo
+  ---------------------------------------------------------------------------
+  Logo + descrizione, menu rapidi e policy (Navigazione Shopify), social,
+  metodi di pagamento attivi nello store (shop.enabled_payment_types: Apple Pay,
+  carte, Klarna, PayPal… compaiono automaticamente) + chip di fallback.
+  Consigliato: aggiungere al gruppo "Footer" dall'editor temi.
+  ===========================================================================
+{%- endcomment -%}
+{% render 'pp-assets' %}
+{%- liquid
+  assign s = section.settings
+  assign menu1 = linklists[s.menu_1]
+  assign menu2 = linklists[s.menu_2]
+-%}
+
+<footer class="pp-scope pp-footer" role="contentinfo">
+  <div class="pp-container">
+    <div class="pp-footer__grid">
+      <div class="pp-footer__brand">
+        <a href="{{ routes.root_url }}" aria-label="{{ shop.name | escape }} — Home">{% render 'pp-logo', variant: 'light' %}</a>
+        <div class="pp-footer__about">{{ s.about }}</div>
+        <ul class="pp-socials" role="list">
+          {%- if s.instagram != blank -%}<li><a href="{{ s.instagram }}" target="_blank" rel="noopener" aria-label="Instagram">{% render 'pp-icon', icon: 'instagram' %}</a></li>{%- endif -%}
+          {%- if s.tiktok != blank -%}<li><a href="{{ s.tiktok }}" target="_blank" rel="noopener" aria-label="TikTok">{% render 'pp-icon', icon: 'tiktok' %}</a></li>{%- endif -%}
+          {%- if s.pinterest != blank -%}<li><a href="{{ s.pinterest }}" target="_blank" rel="noopener" aria-label="Pinterest">{% render 'pp-icon', icon: 'pinterest' %}</a></li>{%- endif -%}
+          {%- if s.facebook != blank -%}<li><a href="{{ s.facebook }}" target="_blank" rel="noopener" aria-label="Facebook">{% render 'pp-icon', icon: 'facebook' %}</a></li>{%- endif -%}
+          {%- if s.youtube != blank -%}<li><a href="{{ s.youtube }}" target="_blank" rel="noopener" aria-label="YouTube">{% render 'pp-icon', icon: 'youtube' %}</a></li>{%- endif -%}
+        </ul>
+      </div>
+
+      <nav aria-label="{{ s.heading_1 | escape }}">
+        <h2 class="pp-footer__heading">{{ s.heading_1 }}</h2>
+        <ul class="pp-footer__links" role="list">
+          {%- if menu1.links.size > 0 -%}
+            {%- for link in menu1.links -%}<li><a href="{{ link.url }}">{{ link.title }}</a></li>{%- endfor -%}
+          {%- else -%}
+            <li><a href="{{ routes.root_url }}">Home</a></li>
+            <li><a href="{{ routes.all_products_collection_url }}">Catalogo</a></li>
+            <li><a href="{{ routes.root_url }}#chi-siamo">Chi Siamo</a></li>
+            <li><a href="{{ routes.root_url }}#recensioni">Recensioni</a></li>
+            <li><a href="{{ routes.root_url }}#contatti">Contatti</a></li>
+          {%- endif -%}
+        </ul>
+      </nav>
+
+      <nav aria-label="{{ s.heading_2 | escape }}">
+        <h2 class="pp-footer__heading">{{ s.heading_2 }}</h2>
+        <ul class="pp-footer__links" role="list">
+          {%- if menu2.links.size > 0 -%}
+            {%- for link in menu2.links -%}<li><a href="{{ link.url }}">{{ link.title }}</a></li>{%- endfor -%}
+          {%- else -%}
+            {%- comment -%} Fallback: policy configurate in Impostazioni → Policy {%- endcomment -%}
+            <li><a href="{{ shop.shipping_policy.url | default: '/policies/shipping-policy' }}">Spedizioni</a></li>
+            <li><a href="{{ shop.refund_policy.url | default: '/policies/refund-policy' }}">Resi e rimborsi</a></li>
+            <li><a href="{{ shop.privacy_policy.url | default: '/policies/privacy-policy' }}">Privacy</a></li>
+            <li><a href="{{ shop.terms_of_service.url | default: '/policies/terms-of-service' }}">Termini e condizioni</a></li>
+          {%- endif -%}
+        </ul>
+      </nav>
+
+      <div>
+        <h2 class="pp-footer__heading">{{ s.heading_3 }}</h2>
+        <ul class="pp-footer__links" role="list">
+          {%- if s.email != blank -%}<li><a href="mailto:{{ s.email }}">{{ s.email }}</a></li>{%- endif -%}
+          {%- if s.whatsapp != blank -%}<li><a href="https://wa.me/{{ s.whatsapp | remove: '+' | remove: ' ' }}" target="_blank" rel="noopener">WhatsApp {{ s.whatsapp }}</a></li>{%- endif -%}
+          {%- if s.address != blank -%}<li>{{ s.address }}</li>{%- endif -%}
+        </ul>
+      </div>
+    </div>
+
+    <div class="pp-footer__bottom">
+      <span>© {{ 'now' | date: '%Y' }} {{ shop.name | default: 'PRIMO PASSO' }} · {{ s.legal_text }}</span>
+
+      <ul class="pp-payments" role="list" aria-label="Metodi di pagamento accettati">
+        {%- if s.show_payment_icons and shop.enabled_payment_types.size > 0 -%}
+          {%- for type in shop.enabled_payment_types -%}
+            <li>{{ type | payment_type_svg_tag }}</li>
+          {%- endfor -%}
+        {%- else -%}
+          <li><span class="pp-payment-chip">Apple&nbsp;Pay</span></li>
+          <li><span class="pp-payment-chip">VISA</span></li>
+          <li><span class="pp-payment-chip">Mastercard</span></li>
+          <li><span class="pp-payment-chip">AMEX</span></li>
+          <li><span class="pp-payment-chip">PayPal</span></li>
+          <li><span class="pp-payment-chip pp-payment-chip--klarna">Klarna.</span></li>
+        {%- endif -%}
+      </ul>
+    </div>
+  </div>
+  <div class="pp-footer__watermark" aria-hidden="true">PRIMO PASSO</div>
+</footer>
+
+{% schema %}
+{
+  "name": "PP · Footer",
+  "tag": "div",
+  "class": "pp-section-footer",
+  "enabled_on": { "groups": ["footer"] },
+  "settings": [
+    { "type": "richtext", "id": "about", "label": "Descrizione brand", "default": "<p>Essenziali premium ed ecologici per neonati e primissima infanzia. Fibre naturali certificate, design italiano, tanto amore in ogni cucitura.</p>" },
+    { "type": "header", "content": "Menu" },
+    { "type": "text", "id": "heading_1", "label": "Titolo colonna 1", "default": "Esplora" },
+    { "type": "link_list", "id": "menu_1", "label": "Menu colonna 1" },
+    { "type": "text", "id": "heading_2", "label": "Titolo colonna 2", "default": "Assistenza" },
+    { "type": "link_list", "id": "menu_2", "label": "Menu colonna 2 (policy)", "info": "Se vuoto mostra Spedizioni, Resi, Privacy, Termini." },
+    { "type": "text", "id": "heading_3", "label": "Titolo colonna 3", "default": "Contatti" },
+    { "type": "text", "id": "email", "label": "Email", "default": "ciao@primopasso.it" },
+    { "type": "text", "id": "whatsapp", "label": "WhatsApp", "default": "+39 345 000 0000" },
+    { "type": "text", "id": "address", "label": "Indirizzo", "default": "Via dei Sogni 1, 20121 Milano" },
+    { "type": "header", "content": "Social" },
+    { "type": "url", "id": "instagram", "label": "Instagram", "default": "https://instagram.com" },
+    { "type": "url", "id": "tiktok", "label": "TikTok", "default": "https://tiktok.com" },
+    { "type": "url", "id": "pinterest", "label": "Pinterest", "default": "https://pinterest.com" },
+    { "type": "url", "id": "facebook", "label": "Facebook" },
+    { "type": "url", "id": "youtube", "label": "YouTube" },
+    { "type": "header", "content": "Fondo pagina" },
+    { "type": "checkbox", "id": "show_payment_icons", "label": "Icone pagamento dallo store", "default": true, "info": "Mostra i metodi attivi in Shopify Payments (Apple Pay, carte, Klarna…)." },
+    { "type": "text", "id": "legal_text", "label": "Testo legale", "default": "P.IVA 00000000000 · Tutti i diritti riservati" }
+  ],
+  "presets": [ { "name": "PP · Footer" } ]
+}
+{% endschema %}

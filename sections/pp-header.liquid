@@ -1,0 +1,244 @@
+{%- comment -%}
+  ===========================================================================
+  PRIMO PASSO · Header sticky (trasparente → frosted glass) + Cart slide-out
+  ---------------------------------------------------------------------------
+  - Trasparente sopra la hero, diventa "frosted glass" (backdrop blur) on scroll
+  - Logo "PRIMO [piedino] PASSO" centrato o a sinistra
+  - Menu da Navigazione Shopify (fallback: Home, Catalogo, Chi Siamo, Recensioni, Contatti)
+  - Icone: Cerca (overlay), Account, Carrello slide-out con badge dinamico
+  - Menu mobile a drawer
+  Consigliato: aggiungere questa sezione al gruppo "Header" dall'editor temi.
+  ===========================================================================
+{%- endcomment -%}
+{% render 'pp-assets' %}
+
+{%- liquid
+  assign menu = linklists[section.settings.menu]
+  assign is_home = false
+  if request.page_type == 'index'
+    assign is_home = true
+  endif
+  assign overlay = false
+  if section.settings.transparent_on_home and is_home
+    assign overlay = true
+  endif
+-%}
+
+<div class="pp-scope">
+  {%- if section.settings.announcement != blank -%}
+    <div class="pp-announcement" role="region" aria-label="Annuncio">
+      {%- if section.settings.announcement_link != blank -%}
+        <a href="{{ section.settings.announcement_link }}">{{ section.settings.announcement }}</a>
+      {%- else -%}
+        {{ section.settings.announcement }}
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+</div>
+
+<pp-header
+  class="pp-scope pp-header-wrapper{% if overlay %} pp-header-wrapper--overlay{% endif %}"
+  data-hide-on-scroll="{{ section.settings.hide_on_scroll }}"
+>
+  <header class="pp-header pp-header--logo-{{ section.settings.logo_position }}">
+    <div class="pp-container pp-header__inner">
+
+      {%- comment -%} Burger (mobile) {%- endcomment -%}
+      <button type="button" class="pp-icon-btn pp-header__burger" data-pp-open="PPMenuDrawer" aria-controls="PPMenuDrawer" aria-expanded="false" aria-label="Apri menu">
+        {% render 'pp-icon', icon: 'menu' %}
+      </button>
+
+      {%- comment -%} Navigazione desktop {%- endcomment -%}
+      <nav class="pp-header__nav" aria-label="Navigazione principale">
+        <ul class="pp-nav" role="list">
+          {%- if menu.links.size > 0 -%}
+            {%- for link in menu.links -%}
+              <li><a class="pp-nav__link" href="{{ link.url }}"{% if link.current %} aria-current="page"{% endif %}>{{ link.title }}</a></li>
+            {%- endfor -%}
+          {%- else -%}
+            <li><a class="pp-nav__link" href="{{ routes.root_url }}"{% if is_home %} aria-current="page"{% endif %}>Home</a></li>
+            <li><a class="pp-nav__link" href="{{ routes.all_products_collection_url }}">Catalogo</a></li>
+            <li><a class="pp-nav__link" href="{{ routes.root_url }}#chi-siamo">Chi Siamo</a></li>
+            <li><a class="pp-nav__link" href="{{ routes.root_url }}#recensioni">Recensioni</a></li>
+            <li><a class="pp-nav__link" href="{{ routes.root_url }}#contatti">Contatti</a></li>
+          {%- endif -%}
+        </ul>
+      </nav>
+
+      {%- comment -%} Logo {%- endcomment -%}
+      <div class="pp-header__logo">
+        <a href="{{ routes.root_url }}" aria-label="{{ shop.name | escape }} — Home">
+          {%- if section.settings.logo != blank -%}
+            {{ section.settings.logo | image_url: width: 480 | image_tag: alt: shop.name, width: section.settings.logo_width, loading: 'eager' }}
+          {%- else -%}
+            {% render 'pp-logo' %}
+          {%- endif -%}
+        </a>
+      </div>
+
+      {%- comment -%} Azioni {%- endcomment -%}
+      <div class="pp-header__actions">
+        <button type="button" class="pp-icon-btn" data-pp-search-open aria-controls="PPSearch" aria-expanded="false" aria-label="Cerca">
+          {% render 'pp-icon', icon: 'search' %}
+        </button>
+        {%- if shop.customer_accounts_enabled -%}
+          <a class="pp-icon-btn pp-hide-mobile" href="{% if customer %}{{ routes.account_url }}{% else %}{{ routes.account_login_url }}{% endif %}" aria-label="{% if customer %}Il mio account{% else %}Accedi{% endif %}">
+            {% render 'pp-icon', icon: 'account' %}
+          </a>
+        {%- endif -%}
+        <a class="pp-icon-btn" href="{{ routes.cart_url }}" data-pp-cart-open aria-controls="PPCartDrawer" aria-label="Carrello ({{ cart.item_count }})">
+          {% render 'pp-icon', icon: 'cart' %}
+          <span class="pp-cart-count" data-pp-cart-count data-count="{{ cart.item_count }}" aria-hidden="true">{{ cart.item_count }}</span>
+        </a>
+      </div>
+    </div>
+  </header>
+</pp-header>
+
+<div class="pp-scope">
+  {%- comment -%} Search overlay {%- endcomment -%}
+  <div class="pp-search" id="PPSearch" role="dialog" aria-modal="true" aria-label="Cerca nel negozio" hidden>
+    <form action="{{ routes.search_url }}" method="get" role="search" class="pp-search__form">
+      <input type="hidden" name="type" value="product">
+      <label for="PPSearchInput" class="pp-visually-hidden">Cerca</label>
+      <input id="PPSearchInput" class="pp-search__input" type="search" name="q" placeholder="Cerca body, copertine, peluche…" autocomplete="off">
+      <button type="submit" class="pp-icon-btn" aria-label="Avvia ricerca">{% render 'pp-icon', icon: 'arrow-right' %}</button>
+      <button type="button" class="pp-icon-btn" data-pp-search-close aria-label="Chiudi ricerca">{% render 'pp-icon', icon: 'close' %}</button>
+    </form>
+    {%- assign suggestions = section.settings.search_suggestions | split: ',' -%}
+    {%- if suggestions.size > 0 -%}
+      <div class="pp-search__suggest">
+        <span>Più cercati:</span>
+        {%- for s in suggestions -%}
+          {%- assign term = s | strip -%}
+          <a href="{{ routes.search_url }}?q={{ term | url_encode }}&type=product">{{ term }}</a>
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+  </div>
+
+  {%- comment -%} Mobile menu drawer {%- endcomment -%}
+  <div class="pp-drawer pp-drawer--left" id="PPMenuDrawer" aria-hidden="true">
+    <div class="pp-drawer__overlay" data-pp-close></div>
+    <div class="pp-drawer__panel" role="dialog" aria-modal="true" aria-label="Menu">
+      <div class="pp-drawer__head">
+        {% render 'pp-logo' %}
+        <button type="button" class="pp-icon-btn" data-pp-close aria-label="Chiudi menu">{% render 'pp-icon', icon: 'close' %}</button>
+      </div>
+      <div class="pp-drawer__body">
+        <ul class="pp-mobile-nav" role="list">
+          {%- if menu.links.size > 0 -%}
+            {%- for link in menu.links -%}
+              <li><a href="{{ link.url }}" data-pp-close>{{ link.title }}{% render 'pp-icon', icon: 'arrow-up-right' %}</a></li>
+            {%- endfor -%}
+          {%- else -%}
+            <li><a href="{{ routes.root_url }}" data-pp-close>Home</a></li>
+            <li><a href="{{ routes.all_products_collection_url }}" data-pp-close>Catalogo</a></li>
+            <li><a href="{{ routes.root_url }}#chi-siamo" data-pp-close>Chi Siamo</a></li>
+            <li><a href="{{ routes.root_url }}#recensioni" data-pp-close>Recensioni</a></li>
+            <li><a href="{{ routes.root_url }}#contatti" data-pp-close>Contatti</a></li>
+          {%- endif -%}
+          {%- if shop.customer_accounts_enabled -%}
+            <li><a href="{% if customer %}{{ routes.account_url }}{% else %}{{ routes.account_login_url }}{% endif %}">{% if customer %}Il mio account{% else %}Accedi{% endif %}</a></li>
+          {%- endif -%}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  {%- comment -%}
+    Cart drawer: il contenuto viene renderizzato via JS da /cart.js,
+    così resta sempre sincronizzato con Quick Add e modifiche quantità.
+  {%- endcomment -%}
+  <div class="pp-drawer pp-drawer--right" id="PPCartDrawer" aria-hidden="true" data-pp-cart-drawer>
+    <div class="pp-drawer__overlay" data-pp-close></div>
+    <div class="pp-drawer__panel" role="dialog" aria-modal="true" aria-labelledby="PPCartTitle">
+      <div class="pp-drawer__head">
+        <h2 class="pp-drawer__title" id="PPCartTitle">Il tuo carrello <span data-pp-cart-title-count>({{ cart.item_count }})</span></h2>
+        <button type="button" class="pp-icon-btn" data-pp-close aria-label="Chiudi carrello">{% render 'pp-icon', icon: 'close' %}</button>
+      </div>
+      <div class="pp-drawer__body" data-pp-cart-body aria-live="polite">
+        {%- comment -%} Stato iniziale server-side (vuoto o in caricamento) {%- endcomment -%}
+        {%- if cart.item_count == 0 -%}
+          <div class="pp-cart__empty">
+            <div class="pp-cart__empty-arch pp-arch pp-arch--full">{% render 'pp-footprint' %}</div>
+            <h3>Il carrello è vuoto</h3>
+            <p>Ogni grande viaggio inizia con un primo passo.</p>
+            <a class="pp-btn" href="{{ routes.all_products_collection_url }}">Esplora la collezione</a>
+          </div>
+        {%- endif -%}
+      </div>
+      <div class="pp-cart__foot" data-pp-cart-foot {% if cart.item_count == 0 %}hidden{% endif %}>
+        <div class="pp-cart__total"><span>Subtotale</span><strong data-pp-cart-total>{{ cart.total_price | money }}</strong></div>
+        <p class="pp-cart__note">{{ section.settings.cart_note }}</p>
+        <form action="{{ routes.cart_url }}" method="post">
+          <button type="submit" name="checkout" class="pp-btn pp-btn--block">
+            Procedi al checkout <span class="pp-btn__icon">{% render 'pp-icon', icon: 'arrow-right' %}</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {%- comment -%} Template stringhe per il JS del carrello {%- endcomment -%}
+  <script type="application/json" id="PPCartStrings">
+    {
+      "freeShippingThreshold": {{ section.settings.free_shipping_threshold | times: 100 | json }},
+      "freeShippingReached": {{ section.settings.free_shipping_reached | json }},
+      "freeShippingRemaining": {{ section.settings.free_shipping_remaining | json }},
+      "emptyTitle": "Il carrello è vuoto",
+      "emptyText": "Ogni grande viaggio inizia con un primo passo.",
+      "emptyCta": "Esplora la collezione",
+      "emptyUrl": {{ routes.all_products_collection_url | json }},
+      "remove": "Rimuovi",
+      "added": "Aggiunto al carrello ✓",
+      "error": "Ops, qualcosa è andato storto. Riprova."
+    }
+  </script>
+
+  <div class="pp-toast" role="status" aria-live="polite" data-pp-toast></div>
+
+  {%- comment -%} clip-path SVG per il formato ad arco (fallback .pp-arch--clip) {%- endcomment -%}
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <clipPath id="pp-arch-clip" clipPathUnits="objectBoundingBox">
+        <path d="M0,0.5 C0,0.22 0.22,0 0.5,0 C0.78,0 1,0.22 1,0.5 L1,0.97 Q1,1 0.97,1 L0.03,1 Q0,1 0,0.97 Z"/>
+      </clipPath>
+    </defs>
+  </svg>
+</div>
+
+{% schema %}
+{
+  "name": "PP · Header",
+  "class": "pp-section-header",
+  "tag": "div",
+  "enabled_on": { "groups": ["header"] },
+  "settings": [
+    { "type": "header", "content": "Barra annunci" },
+    { "type": "text", "id": "announcement", "label": "Testo annuncio", "default": "Spedizione gratuita sopra i 50€ · Reso facile entro 30 giorni" },
+    { "type": "url", "id": "announcement_link", "label": "Link annuncio" },
+
+    { "type": "header", "content": "Logo & navigazione" },
+    { "type": "image_picker", "id": "logo", "label": "Logo immagine (opzionale)", "info": "Se vuoto viene usato il logo tipografico PRIMO [piedino] PASSO." },
+    { "type": "range", "id": "logo_width", "min": 80, "max": 300, "step": 10, "unit": "px", "label": "Larghezza logo immagine", "default": 170 },
+    {
+      "type": "select", "id": "logo_position", "label": "Posizione logo", "default": "center",
+      "options": [ { "value": "center", "label": "Centrato" }, { "value": "left", "label": "A sinistra" } ]
+    },
+    { "type": "link_list", "id": "menu", "label": "Menu", "default": "main-menu", "info": "Suggerito: Home, Catalogo, Chi Siamo, Recensioni, Contatti" },
+
+    { "type": "header", "content": "Comportamento" },
+    { "type": "checkbox", "id": "transparent_on_home", "label": "Header trasparente sopra la hero (solo homepage)", "default": true },
+    { "type": "checkbox", "id": "hide_on_scroll", "label": "Nascondi scrollando in basso, mostra scrollando in alto", "default": false },
+    { "type": "text", "id": "search_suggestions", "label": "Suggerimenti ricerca (separati da virgola)", "default": "Body, Copertine, Peluche, Scarpine" },
+
+    { "type": "header", "content": "Carrello slide-out" },
+    { "type": "range", "id": "free_shipping_threshold", "min": 0, "max": 200, "step": 5, "unit": "€", "label": "Soglia spedizione gratuita", "default": 50, "info": "0 = nascondi la barra di avanzamento" },
+    { "type": "text", "id": "free_shipping_remaining", "label": "Testo soglia spedizione", "default": "Ti mancano [amount] per la spedizione gratuita", "info": "[amount] viene sostituito dall'importo mancante." },
+    { "type": "text", "id": "free_shipping_reached", "label": "Testo soglia raggiunta", "default": "Evviva! La spedizione è gratuita 🎉" },
+    { "type": "text", "id": "cart_note", "label": "Nota sotto il totale", "default": "Tasse incluse. Spese di spedizione calcolate al checkout." }
+  ],
+  "presets": [ { "name": "PP · Header" } ]
+}
+{% endschema %}

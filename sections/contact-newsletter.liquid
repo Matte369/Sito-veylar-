@@ -1,0 +1,183 @@
+{%- comment -%}
+  ===========================================================================
+  PRIMO PASSO · Contatti, Supporto Clienti & Newsletter
+  ---------------------------------------------------------------------------
+  - Card contatto: WhatsApp (link wa.me con messaggio precompilato), Chat
+    (apre Shopify Inbox se presente), Email, Telefono
+  - Orari del servizio clienti con stato "Online ora" calcolato lato client
+  - Newsletter "Unisciti alla famiglia" con form cliente Shopify nativo
+    (tag newsletter, consenso marketing) e codice sconto 10% al successo
+  ===========================================================================
+{%- endcomment -%}
+{% render 'pp-assets' %}
+{%- liquid
+  assign s = section.settings
+  assign wa_number = s.whatsapp | remove: '+' | remove: ' ' | remove: '-' | remove: '.'
+  assign newsletter_id = 'PPNewsletter-' | append: section.id
+-%}
+
+<section
+  id="{{ s.anchor | default: section.id | handleize }}"
+  class="pp-scope pp-section pp-contact"
+  style="--pp-section-bg: {{ s.background }};"
+  aria-labelledby="pp-contact-title-{{ section.id }}"
+>
+  <div class="pp-container">
+    <header class="pp-section-head">
+      <div>
+        {%- if s.eyebrow != blank -%}<span class="pp-eyebrow pp-reveal">{{ s.eyebrow }}</span>{%- endif -%}
+        <h2 id="pp-contact-title-{{ section.id }}" class="pp-section-head__title pp-reveal" style="--pp-delay: 1">{{ s.heading }}</h2>
+      </div>
+      {%- if s.text != blank -%}<div class="pp-section-head__text pp-reveal" style="--pp-delay: 2">{{ s.text }}</div>{%- endif -%}
+    </header>
+
+    <div class="pp-contact__grid">
+      {%- comment -%} Colonna supporto {%- endcomment -%}
+      <div class="pp-contact__cards">
+        {%- if wa_number != blank -%}
+          <a class="pp-contact-card pp-contact-card--whatsapp pp-reveal" href="https://wa.me/{{ wa_number }}?text={{ s.whatsapp_message | url_encode }}" target="_blank" rel="noopener">
+            <span class="pp-contact-card__icon">{% render 'pp-icon', icon: 'whatsapp' %}</span>
+            <span>
+              <span class="pp-contact-card__label">Assistenza WhatsApp</span>
+              <span class="pp-contact-card__value" style="display:block">{{ s.whatsapp }}</span>
+              <span class="pp-status" data-pp-hours="{{ s.hours_weekdays_range }}|{{ s.hours_saturday_range }}" data-pp-online="Online ora · risposta in pochi minuti" data-pp-offline="Ti rispondiamo appena rientriamo">&nbsp;</span>
+            </span>
+            <svg class="pp-contact-card__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 12h16M14 6l6 6-6 6"/></svg>
+          </a>
+        {%- endif -%}
+
+        {%- if s.show_chat -%}
+          <button type="button" class="pp-contact-card pp-contact-card--button pp-reveal" style="--pp-delay: 1" data-pp-chat data-fallback="{% if s.email != blank %}mailto:{{ s.email }}{% else %}{{ routes.root_url }}pages/contact{% endif %}">
+            <span class="pp-contact-card__icon">{% render 'pp-icon', icon: 'chat' %}</span>
+            <span>
+              <span class="pp-contact-card__label">Chat diretta</span>
+              <span class="pp-contact-card__value" style="display:block">{{ s.chat_label }}</span>
+            </span>
+            <svg class="pp-contact-card__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 12h16M14 6l6 6-6 6"/></svg>
+          </button>
+        {%- endif -%}
+
+        {%- if s.email != blank -%}
+          <a class="pp-contact-card pp-reveal" style="--pp-delay: 2" href="mailto:{{ s.email }}">
+            <span class="pp-contact-card__icon">{% render 'pp-icon', icon: 'mail' %}</span>
+            <span>
+              <span class="pp-contact-card__label">Email</span>
+              <span class="pp-contact-card__value" style="display:block">{{ s.email }}</span>
+            </span>
+            <svg class="pp-contact-card__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 12h16M14 6l6 6-6 6"/></svg>
+          </a>
+        {%- endif -%}
+
+        {%- if s.phone != blank -%}
+          <a class="pp-contact-card pp-reveal" style="--pp-delay: 3" href="tel:{{ s.phone | remove: ' ' }}">
+            <span class="pp-contact-card__icon">{% render 'pp-icon', icon: 'phone' %}</span>
+            <span>
+              <span class="pp-contact-card__label">Telefono</span>
+              <span class="pp-contact-card__value" style="display:block">{{ s.phone }}</span>
+            </span>
+            <svg class="pp-contact-card__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 12h16M14 6l6 6-6 6"/></svg>
+          </a>
+        {%- endif -%}
+
+        <div class="pp-hours pp-reveal" style="--pp-delay: 4">
+          <h3>{% render 'pp-icon', icon: 'clock' %} Orari servizio clienti</h3>
+          <dl>
+            <dt>Lunedì – Venerdì</dt><dd>{{ s.hours_weekdays }}</dd>
+            <dt>Sabato</dt><dd>{{ s.hours_saturday }}</dd>
+            <dt>Domenica e festivi</dt><dd>{{ s.hours_sunday }}</dd>
+          </dl>
+        </div>
+      </div>
+
+      {%- comment -%} Colonna newsletter (arco terracotta) {%- endcomment -%}
+      <div class="pp-newsletter pp-reveal" style="--pp-delay: 2">
+        {% render 'pp-footprint', class: 'pp-newsletter__foot' %}
+        <h2>{{ s.nl_heading }}</h2>
+        {%- if s.nl_text != blank -%}<div class="pp-newsletter__text">{{ s.nl_text }}</div>{%- endif -%}
+        {%- if s.nl_offer != blank -%}
+          <div class="pp-newsletter__offer"><b>{{ s.nl_offer_badge }}</b>{{ s.nl_offer }}</div>
+        {%- endif -%}
+
+        {%- form 'customer', id: newsletter_id, class: 'pp-newsletter__form' -%}
+          <input type="hidden" name="contact[tags]" value="newsletter, primo-passo-welcome">
+          <input type="hidden" name="contact[accepts_marketing]" value="true">
+          {%- if form.posted_successfully? -%}
+            <div class="pp-newsletter__msg" role="status">
+              <strong>Benvenuto nella famiglia PRIMO PASSO! 🎉</strong><br>
+              {%- if s.discount_code != blank -%}
+                Ecco il tuo codice per il primo ordine:<br>
+                <button type="button" class="pp-newsletter__code" data-pp-copy="{{ s.discount_code }}" aria-label="Copia codice {{ s.discount_code }}">{{ s.discount_code }}</button>
+              {%- else -%}
+                Controlla la tua casella email: il tuo sconto è in arrivo.
+              {%- endif -%}
+            </div>
+          {%- else -%}
+            <div class="pp-field">
+              <label for="PPNewsletterEmail-{{ section.id }}" class="pp-visually-hidden">Indirizzo email</label>
+              <input
+                id="PPNewsletterEmail-{{ section.id }}"
+                type="email"
+                name="contact[email]"
+                value="{{ form.email }}"
+                placeholder="La tua email"
+                autocomplete="email"
+                autocapitalize="off"
+                spellcheck="false"
+                required
+                {% if form.errors %}aria-invalid="true" aria-describedby="PPNewsletterError-{{ section.id }}"{% endif %}
+              >
+              <button type="submit" class="pp-btn">{{ s.nl_button }}</button>
+            </div>
+            {%- if form.errors -%}
+              <div id="PPNewsletterError-{{ section.id }}" class="pp-newsletter__msg" role="alert">
+                {{ form.errors.translated_fields.email | capitalize }} {{ form.errors.messages.email }}
+              </div>
+            {%- endif -%}
+          {%- endif -%}
+          <p class="pp-newsletter__legal">{{ s.nl_legal }}</p>
+        {%- endform -%}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "PP · Contatti & Newsletter",
+  "tag": "div",
+  "class": "pp-section-contact",
+  "settings": [
+    { "type": "text", "id": "anchor", "label": "Ancora (ID link menu)", "default": "contatti" },
+    { "type": "text", "id": "eyebrow", "label": "Occhiello", "default": "Siamo qui per te" },
+    { "type": "inline_richtext", "id": "heading", "label": "Titolo", "default": "Un aiuto <em>gentile</em>, quando serve" },
+    { "type": "richtext", "id": "text", "label": "Testo", "default": "<p>Dubbi sulle taglie, idee regalo o un ordine da seguire? Il nostro team di genitori risponde con la stessa cura che mettiamo nei nostri prodotti.</p>" },
+
+    { "type": "header", "content": "Canali di supporto" },
+    { "type": "text", "id": "whatsapp", "label": "Numero WhatsApp (formato internazionale)", "default": "+39 345 000 0000" },
+    { "type": "text", "id": "whatsapp_message", "label": "Messaggio precompilato WhatsApp", "default": "Ciao PRIMO PASSO! Vorrei un consiglio su…" },
+    { "type": "checkbox", "id": "show_chat", "label": "Mostra 'Chat diretta' (Shopify Inbox)", "default": true },
+    { "type": "text", "id": "chat_label", "label": "Testo chat", "default": "Scrivici in tempo reale" },
+    { "type": "text", "id": "email", "label": "Email", "default": "ciao@primopasso.it" },
+    { "type": "text", "id": "phone", "label": "Telefono (opzionale)" },
+
+    { "type": "header", "content": "Orari" },
+    { "type": "text", "id": "hours_weekdays", "label": "Lun–Ven (testo)", "default": "9:00 – 19:00" },
+    { "type": "text", "id": "hours_weekdays_range", "label": "Lun–Ven (ore, per stato online)", "default": "9-19", "info": "Formato 9-19" },
+    { "type": "text", "id": "hours_saturday", "label": "Sabato (testo)", "default": "9:00 – 13:00" },
+    { "type": "text", "id": "hours_saturday_range", "label": "Sabato (ore, per stato online)", "default": "9-13" },
+    { "type": "text", "id": "hours_sunday", "label": "Domenica (testo)", "default": "Chiuso" },
+
+    { "type": "header", "content": "Newsletter" },
+    { "type": "inline_richtext", "id": "nl_heading", "label": "Titolo", "default": "Unisciti alla famiglia <em>PRIMO PASSO</em>" },
+    { "type": "richtext", "id": "nl_text", "label": "Testo", "default": "<p>Consigli dei nostri esperti, anteprime delle collezioni e piccole sorprese, solo per chi è iscritto.</p>" },
+    { "type": "text", "id": "nl_offer_badge", "label": "Badge offerta", "default": "-10%" },
+    { "type": "text", "id": "nl_offer", "label": "Testo offerta", "default": "sul tuo primo ordine" },
+    { "type": "text", "id": "discount_code", "label": "Codice sconto mostrato all'iscrizione", "default": "BENVENUTO10", "info": "Crea il codice in Shopify → Sconti." },
+    { "type": "text", "id": "nl_button", "label": "Pulsante", "default": "Iscriviti" },
+    { "type": "text", "id": "nl_legal", "label": "Nota privacy", "default": "Niente spam, promesso. Puoi annullare l'iscrizione in qualsiasi momento." },
+
+    { "type": "color", "id": "background", "label": "Sfondo sezione", "default": "#F7F3EE" }
+  ],
+  "presets": [ { "name": "PP · Contatti & Newsletter" } ]
+}
+{% endschema %}

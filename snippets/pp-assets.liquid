@@ -1,0 +1,28 @@
+{%- comment -%}
+  PRIMO PASSO · Asset loader
+  Renderizzato da ogni sezione PRIMO PASSO: font, CSS e JS core.
+  Le sezioni Shopify sono renderizzate in isolamento, quindi ogni sezione
+  include questo snippet. Il browser deduplica il CSS in cache e il JS core
+  è protetto da un guard (window.PrimoPasso) contro la doppia esecuzione.
+{%- endcomment -%}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+{{ 'primo-passo.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'primo-passo.js' | asset_url }}" defer></script>
+<script>
+  /* Rotte Shopify e stringhe esposte al JS (idempotente) */
+  window.PrimoPassoConfig = window.PrimoPassoConfig || {
+    routes: {
+      root: {{ routes.root_url | json }},
+      cart: {{ routes.cart_url | json }},
+      cartAdd: {{ routes.cart_add_url | json }},
+      cartChange: {{ routes.cart_change_url | json }},
+      search: {{ routes.search_url | json }}
+    },
+    currency: {{ cart.currency.iso_code | default: shop.currency | json }},
+    locale: {{ request.locale.iso_code | default: 'it' | json }},
+    moneyFormat: {{ shop.money_format | json }}
+  };
+  document.documentElement.classList.remove('no-js');
+</script>

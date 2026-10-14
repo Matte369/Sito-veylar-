@@ -1,0 +1,15 @@
+{
+  "type": "header",
+  "name": "Header group",
+  "sections": {
+    "pp-header": {
+      "type": "pp-header",
+      "settings": {
+        "logo_position": "center",
+        "menu": "main-menu",
+        "transparent_on_home": true
+      }
+    }
+  },
+  "order": ["pp-header"]
+}

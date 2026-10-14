@@ -1,0 +1,150 @@
+{%- comment -%}
+  ===========================================================================
+  PRIMO PASSO · Recensioni & Social Proof
+  ---------------------------------------------------------------------------
+  - Punteggio complessivo (es. 4.9/5) con stelle e conteggio
+  - Carosello (scroll-snap + drag + frecce + progress + autoplay) di recensioni
+    di genitori con foto bambino/prodotto e bollino "Acquisto Verificato"
+  - Riga "Ne parlano" con testate/press
+  ===========================================================================
+{%- endcomment -%}
+{% render 'pp-assets' %}
+{%- assign s = section.settings -%}
+
+<section
+  id="{{ s.anchor | default: section.id | handleize }}"
+  class="pp-scope pp-section pp-reviews"
+  style="--pp-section-bg: {{ s.background }};"
+  aria-labelledby="pp-reviews-title-{{ section.id }}"
+>
+  <div class="pp-container">
+    <header class="pp-section-head">
+      <div>
+        {%- if s.eyebrow != blank -%}<span class="pp-eyebrow pp-reveal">{{ s.eyebrow }}</span>{%- endif -%}
+        <h2 id="pp-reviews-title-{{ section.id }}" class="pp-section-head__title pp-reveal" style="--pp-delay: 1">{{ s.heading }}</h2>
+      </div>
+      <div class="pp-reviews__summary pp-reveal" style="--pp-delay: 2">
+        <div class="pp-reviews__score">{{ s.score }}<small>/5</small></div>
+        <div class="pp-reviews__meta">
+          {%- assign score_num = s.score | plus: 0.0 -%}
+          {% render 'pp-stars', rating: score_num, size: 'lg', uid: section.id %}
+          <div><strong>{{ s.count_text }}</strong></div>
+          <div class="pp-review__verified">{% render 'pp-icon', icon: 'verified' %}{{ s.verified_text }}</div>
+        </div>
+      </div>
+    </header>
+
+    <pp-carousel data-autoplay="{{ s.autoplay_seconds }}">
+      <div class="pp-reviews__track" data-pp-track role="region" aria-roledescription="carosello" aria-label="Recensioni dei genitori" tabindex="0">
+        {%- for block in section.blocks -%}
+          {%- assign b = block.settings -%}
+          <article class="pp-review pp-reveal" style="--pp-delay: {{ forloop.index0 | modulo: 4 }}" aria-roledescription="slide" aria-label="{{ forloop.index }} di {{ forloop.length }}" {{ block.shopify_attributes }}>
+            {%- if b.image != blank or s.show_placeholders -%}
+              <div class="pp-review__media pp-arch">
+                {%- if b.image != blank -%}
+                  {{ b.image | image_url: width: 800 | image_tag: loading: 'lazy', widths: '400, 600, 800', sizes: '(min-width: 990px) 390px, 80vw', alt: b.image.alt | default: b.product_name }}
+                {%- else -%}
+                  {%- capture ph -%}{% cycle 'lifestyle-1', 'product-apparel-2', 'lifestyle-2', 'product-apparel-3' %}{%- endcapture -%}
+                  {{ ph | placeholder_svg_tag: 'placeholder-svg' }}
+                {%- endif -%}
+              </div>
+            {%- endif -%}
+            <div class="pp-review__body">
+              <div class="pp-review__top">
+                {%- assign r = b.rating | plus: 0.0 -%}
+                {% render 'pp-stars', rating: r, uid: block.id %}
+                {%- if b.verified -%}
+                  <span class="pp-review__verified">{% render 'pp-icon', icon: 'verified' %}Acquisto verificato</span>
+                {%- endif -%}
+              </div>
+              {%- if b.title != blank -%}<h3 class="pp-review__title">“{{ b.title }}”</h3>{%- endif -%}
+              <div class="pp-review__text">{{ b.text }}</div>
+              <div class="pp-review__author">
+                <span class="pp-review__avatar" aria-hidden="true">
+                  {%- if b.avatar != blank -%}
+                    {{ b.avatar | image_url: width: 80 | image_tag: loading: 'lazy', alt: '' }}
+                  {%- else -%}
+                    {{ b.author | slice: 0 }}
+                  {%- endif -%}
+                </span>
+                <div>
+                  <div class="pp-review__name">{{ b.author }}{% if b.location != blank %} · {{ b.location }}{% endif %}</div>
+                  {%- if b.product_name != blank -%}
+                    <div class="pp-review__product">
+                      {%- if b.product_link != blank -%}<a href="{{ b.product_link }}" class="pp-link">{{ b.product_name }}</a>{%- else -%}{{ b.product_name }}{%- endif -%}
+                    </div>
+                  {%- endif -%}
+                </div>
+              </div>
+            </div>
+          </article>
+        {%- endfor -%}
+      </div>
+
+      <div class="pp-reviews__controls">
+        <div class="pp-reviews__progress" aria-hidden="true"><span data-pp-progress></span></div>
+        <div class="pp-reviews__arrows">
+          <button type="button" class="pp-arrow" data-pp-prev aria-label="Recensione precedente">{% render 'pp-icon', icon: 'arrow-left' %}</button>
+          <button type="button" class="pp-arrow" data-pp-next aria-label="Recensione successiva">{% render 'pp-icon', icon: 'arrow-right' %}</button>
+        </div>
+      </div>
+    </pp-carousel>
+
+    {%- assign press = s.press | split: ',' -%}
+    {%- if press.size > 0 -%}
+      <div class="pp-press pp-reveal" aria-label="Ne parlano">
+        {%- for p in press -%}<span>{{ p | strip }}</span>{%- endfor -%}
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "PP · Recensioni",
+  "tag": "div",
+  "class": "pp-section-reviews",
+  "settings": [
+    { "type": "text", "id": "anchor", "label": "Ancora (ID link menu)", "default": "recensioni" },
+    { "type": "text", "id": "eyebrow", "label": "Occhiello", "default": "Parola di genitori" },
+    { "type": "inline_richtext", "id": "heading", "label": "Titolo", "default": "Piccoli passi, <em>grandi sorrisi</em>" },
+    { "type": "text", "id": "score", "label": "Punteggio medio", "default": "4.9" },
+    { "type": "text", "id": "count_text", "label": "Testo conteggio", "default": "Oltre 2.300 recensioni" },
+    { "type": "text", "id": "verified_text", "label": "Testo bollino", "default": "Recensioni verificate" },
+    { "type": "range", "id": "autoplay_seconds", "min": 0, "max": 10, "step": 1, "unit": "s", "label": "Autoplay (0 = disattivato)", "default": 6 },
+    { "type": "checkbox", "id": "show_placeholders", "label": "Mostra immagini segnaposto se mancanti", "default": true },
+    { "type": "text", "id": "press", "label": "Ne parlano (separati da virgola)", "default": "Vogue Bambini, Io Donna, Nostro Figlio, Insieme, Dove" },
+    { "type": "color", "id": "background", "label": "Sfondo sezione", "default": "#FDFBF7" }
+  ],
+  "blocks": [
+    {
+      "type": "review",
+      "name": "Recensione",
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Foto bambino / prodotto" },
+        { "type": "range", "id": "rating", "min": 1, "max": 5, "step": 1, "label": "Stelle", "default": 5 },
+        { "type": "text", "id": "title", "label": "Titolo", "default": "Morbidissimo, lo rifarei subito" },
+        { "type": "richtext", "id": "text", "label": "Testo", "default": "<p>Il body in cotone organico è delicatissimo: nessun arrossamento, lavaggio dopo lavaggio. Si vede la cura in ogni cucitura.</p>" },
+        { "type": "text", "id": "author", "label": "Nome", "default": "Giulia R." },
+        { "type": "text", "id": "location", "label": "Città", "default": "Milano" },
+        { "type": "image_picker", "id": "avatar", "label": "Avatar (opzionale)" },
+        { "type": "text", "id": "product_name", "label": "Prodotto acquistato", "default": "Body in Cotone Organico" },
+        { "type": "url", "id": "product_link", "label": "Link prodotto" },
+        { "type": "checkbox", "id": "verified", "label": "Acquisto verificato", "default": true }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "PP · Recensioni",
+      "blocks": [
+        { "type": "review", "settings": { "title": "Morbidissimo, lo rifarei subito", "author": "Giulia R.", "location": "Milano", "product_name": "Body in Cotone Organico", "text": "<p>Il body in cotone organico è delicatissimo: nessun arrossamento, lavaggio dopo lavaggio. Si vede la cura in ogni cucitura.</p>" } },
+        { "type": "review", "settings": { "title": "Il regalo più apprezzato", "author": "Francesca M.", "location": "Bologna", "product_name": "Copertina Mussola Nuvola", "text": "<p>L'ho regalata a mia sorella per la nascita di Leo: packaging bellissimo e la mussola diventa ancora più morbida con i lavaggi.</p>" } },
+        { "type": "review", "settings": { "title": "Primi passi sicuri", "author": "Luca e Sara", "location": "Torino", "product_name": "Scarpine Primi Passi", "text": "<p>Suola flessibile e antiscivolo, Emma le indossa volentieri e non le toglie mai. Spedizione arrivata in 24 ore!</p>" } },
+        { "type": "review", "settings": { "title": "Il suo compagno di nanna", "author": "Chiara B.", "location": "Roma", "product_name": "Peluche Orsetto Panna", "text": "<p>Materiali naturali e cuciture robuste: finalmente un peluche di cui mi fido. Mio figlio non si addormenta più senza.</p>" } },
+        { "type": "review", "settings": { "title": "Qualità che si sente", "author": "Elena T.", "location": "Firenze", "product_name": "Sacco Nanna Avorio", "rating": 5, "text": "<p>Tessuto traspirante, zip protetta e taglie generose. Assistenza su WhatsApp gentilissima per la scelta della misura.</p>" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,208 @@
+{%- comment -%}
+  ===========================================================================
+  PRIMO PASSO · Hero 3D immersiva — "Cameretta realistica"
+  ---------------------------------------------------------------------------
+  - Scena Three.js procedurale (nessun file .glb da caricare): culla in legno
+    chiaro, finestra con luce calda, peluche tondo, tappeto, arco terracotta
+    dipinto a parete, giostrina, lampada, mensola, pianta, pulviscolo nella luce.
+  - Camera: fly-through dolce legato allo scroll + orbit morbido su mouse/touch
+    (giroscopio opzionale su mobile).
+  - Prestazioni: Three.js caricato in lazy (dynamic import) solo quando la hero
+    è visibile; DPR limitato; render loop in pausa fuori viewport / tab nascosta;
+    qualità adattiva se gli FPS scendono.
+  - Fallback: parallax CSS 3D a livelli (WebGL assente, reduced-motion,
+    o 3D disattivato dall'editor) + eventuale immagine personalizzata.
+  ===========================================================================
+{%- endcomment -%}
+{% render 'pp-assets' %}
+
+{%- liquid
+  assign s = section.settings
+  assign title_words = s.title | split: ' '
+  assign highlight = s.title_highlight | downcase | split: ','
+  assign hero_h = s.height
+  if hero_h == 'full'
+    assign hero_h_css = '100svh'
+  else
+    assign hero_h_css = hero_h | append: 'svh'
+  endif
+-%}
+
+<style>
+  #pp-hero-{{ section.id }} {
+    --pp-hero-height: {{ hero_h_css }};
+    --pp-veil: {{ s.veil_opacity | divided_by: 100.0 }};
+  }
+  @supports not (height: 1svh) {
+    #pp-hero-{{ section.id }} { --pp-hero-height: {{ hero_h_css | replace: 'svh', 'vh' }}; }
+  }
+</style>
+
+<pp-hero-3d
+  id="pp-hero-{{ section.id }}"
+  class="pp-scope pp-hero pp-hero--{{ s.text_alignment }}"
+  data-enable-3d="{{ s.enable_3d }}"
+  data-three-url="{{ s.three_cdn_url | escape }}"
+  data-scene-url="{{ 'primo-passo-hero-3d.js' | asset_url }}"
+  data-camera-intensity="{{ s.camera_intensity }}"
+  data-scroll-travel="{{ s.scroll_travel }}"
+  data-auto-orbit="{{ s.auto_orbit }}"
+  data-gyro="{{ s.enable_gyro }}"
+  data-shadows="{{ s.shadows }}"
+  data-dust="{{ s.dust_particles }}"
+  data-time-of-day="{{ s.time_of_day }}"
+  data-color-accent="{{ s.color_accent }}"
+  data-color-wall="{{ s.color_wall }}"
+  data-color-wood="{{ s.color_wood }}"
+  data-color-plush="{{ s.color_plush }}"
+  aria-label="{{ s.title | escape }}"
+>
+  <div class="pp-hero__stage" aria-hidden="true">
+    {%- comment -%} Fallback CSS 3D parallax (visibile finché WebGL non è pronto) {%- endcomment -%}
+    <div class="pp-hero__fallback" data-pp-hero-fallback>
+      {%- if s.fallback_image != blank -%}
+        {{
+          s.fallback_image
+          | image_url: width: 2400
+          | image_tag:
+            class: 'pp-hero__fallback-img pp-hero__layer',
+            style: '--depth: 12px',
+            loading: 'eager',
+            fetchpriority: 'high',
+            widths: '750, 1100, 1500, 1800, 2400',
+            sizes: '100vw',
+            alt: ''
+        }}
+      {%- else -%}
+        <div class="pp-hero__layer pp-hero__layer--window"></div>
+        <div class="pp-hero__layer pp-hero__layer--arch"></div>
+        <div class="pp-hero__layer pp-hero__layer--crib"></div>
+        <div class="pp-hero__layer pp-hero__layer--plush"></div>
+      {%- endif -%}
+    </div>
+    <canvas class="pp-hero__canvas" data-pp-hero-canvas></canvas>
+  </div>
+
+  <div class="pp-hero__veil"></div>
+
+  <div class="pp-hero__content">
+    <div class="pp-container">
+      <div class="pp-hero__card">
+        {%- if s.eyebrow != blank -%}
+          <span class="pp-eyebrow pp-reveal" style="--pp-delay: 0">{{ s.eyebrow }}</span>
+        {%- endif -%}
+
+        {%- comment -%}
+          Titolo con reveal parola per parola. Le parole elencate in
+          "Parole in evidenza" vengono rese in corsivo terracotta.
+        {%- endcomment -%}
+        <h1 class="pp-hero__title">
+          {%- for word in title_words -%}
+            {%- assign clean = word | downcase | remove: ',' | remove: '.' | remove: '!' | strip -%}
+            {%- assign is_hl = false -%}
+            {%- for h in highlight -%}
+              {%- assign hs = h | strip -%}
+              {%- if hs != blank and clean == hs -%}{%- assign is_hl = true -%}{%- endif -%}
+            {%- endfor -%}
+            <span class="pp-word"><span style="--i: {{ forloop.index0 }}">{% if is_hl %}<em>{{ word }}</em>{% else %}{{ word }}{% endif %}</span></span>{% unless forloop.last %} {% endunless %}
+          {%- endfor -%}
+        </h1>
+
+        {%- if s.subtitle != blank -%}
+          <div class="pp-hero__text pp-reveal" style="--pp-delay: 4">{{ s.subtitle }}</div>
+        {%- endif -%}
+
+        <div class="pp-hero__actions pp-reveal" style="--pp-delay: 5">
+          {%- if s.button_label != blank -%}
+            <a class="pp-btn" href="{{ s.button_link | default: routes.all_products_collection_url }}" data-pp-magnetic>
+              {{ s.button_label }}
+              <span class="pp-btn__icon">{% render 'pp-icon', icon: 'arrow-right' %}</span>
+            </a>
+          {%- endif -%}
+          {%- if s.button2_label != blank -%}
+            <a class="pp-link" href="{{ s.button2_link | default: '#chi-siamo' }}">{{ s.button2_label }}</a>
+          {%- endif -%}
+        </div>
+
+        {%- if s.show_trust -%}
+          <div class="pp-hero__trust pp-reveal" style="--pp-delay: 6">
+            <div class="pp-hero__avatars" aria-hidden="true"><span>G</span><span>M</span><span>+</span></div>
+            <div>
+              {% render 'pp-stars', rating: 5, uid: 'hero' %}
+              <div>{{ s.trust_text }}</div>
+            </div>
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+
+  {%- if s.show_scroll_hint -%}
+    <a class="pp-hero__scroll" href="#pp-after-hero-{{ section.id }}" aria-label="Scorri verso il basso">
+      <i aria-hidden="true"></i>Scorri
+    </a>
+  {%- endif -%}
+  <div class="pp-hero__hint" aria-hidden="true">{% render 'pp-icon', icon: 'move' %}<span>Muovi il cursore per esplorare la cameretta</span></div>
+</pp-hero-3d>
+<div id="pp-after-hero-{{ section.id }}"></div>
+
+{% schema %}
+{
+  "name": "PP · Hero 3D Cameretta",
+  "tag": "section",
+  "class": "pp-section-hero",
+  "settings": [
+    { "type": "header", "content": "Contenuto" },
+    { "type": "text", "id": "eyebrow", "label": "Occhiello", "default": "Nuova collezione · Cotone organico GOTS" },
+    { "type": "textarea", "id": "title", "label": "Titolo", "default": "I primi passi del tuo bambino, guidati con amore e stile." },
+    { "type": "text", "id": "title_highlight", "label": "Parole in evidenza (corsivo terracotta, separate da virgola)", "default": "amore,stile" },
+    { "type": "richtext", "id": "subtitle", "label": "Sottotitolo", "default": "<p>Da PRIMO PASSO creiamo essenziali per la prima infanzia in fibre naturali e certificate: morbidi sulla pelle, rispettosi del pianeta e pensati per accompagnare ogni scoperta, dal primo abbraccio al primo passo.</p>" },
+    { "type": "text", "id": "button_label", "label": "Pulsante principale", "default": "Esplora la Collezione" },
+    { "type": "url", "id": "button_link", "label": "Link pulsante principale" },
+    { "type": "text", "id": "button2_label", "label": "Link secondario", "default": "La nostra storia" },
+    { "type": "url", "id": "button2_link", "label": "URL link secondario" },
+    { "type": "checkbox", "id": "show_trust", "label": "Mostra social proof", "default": true },
+    { "type": "text", "id": "trust_text", "label": "Testo social proof", "default": "Scelto da oltre 12.000 famiglie italiane" },
+    {
+      "type": "select", "id": "text_alignment", "label": "Allineamento testo", "default": "left",
+      "options": [ { "value": "left", "label": "Sinistra" }, { "value": "center", "label": "Centro" } ]
+    },
+
+    { "type": "header", "content": "Layout" },
+    {
+      "type": "select", "id": "height", "label": "Altezza", "default": "full",
+      "options": [ { "value": "full", "label": "Schermo intero" }, { "value": "90", "label": "90%" }, { "value": "80", "label": "80%" } ]
+    },
+    { "type": "range", "id": "veil_opacity", "min": 0, "max": 100, "step": 5, "unit": "%", "label": "Velo di leggibilità", "default": 80 },
+    { "type": "checkbox", "id": "show_scroll_hint", "label": "Mostra indicatore di scroll", "default": true },
+
+    { "type": "header", "content": "Scena 3D (Three.js)" },
+    { "type": "checkbox", "id": "enable_3d", "label": "Attiva scena 3D", "default": true, "info": "Se disattivata, o se il dispositivo non supporta WebGL, viene mostrato il parallax CSS / immagine di fallback." },
+    { "type": "image_picker", "id": "fallback_image", "label": "Immagine di fallback (opzionale)", "info": "Consigliata 2400×1400. Mostrata durante il caricamento del 3D e se il 3D è disattivato." },
+    {
+      "type": "select", "id": "time_of_day", "label": "Atmosfera luce", "default": "golden",
+      "options": [
+        { "value": "morning", "label": "Mattino (luce chiara)" },
+        { "value": "golden", "label": "Golden hour (calda)" },
+        { "value": "dusk", "label": "Tramonto (soffusa)" }
+      ]
+    },
+    { "type": "range", "id": "camera_intensity", "min": 0, "max": 10, "step": 1, "label": "Intensità movimento camera (mouse/touch)", "default": 5 },
+    { "type": "range", "id": "scroll_travel", "min": 0, "max": 10, "step": 1, "label": "Fly-through legato allo scroll", "default": 6 },
+    { "type": "checkbox", "id": "auto_orbit", "label": "Respiro automatico della camera", "default": true },
+    { "type": "checkbox", "id": "enable_gyro", "label": "Usa giroscopio su mobile (se consentito)", "default": false },
+    { "type": "checkbox", "id": "shadows", "label": "Ombre morbide", "default": true },
+    { "type": "checkbox", "id": "dust_particles", "label": "Pulviscolo nella luce", "default": true },
+    { "type": "color", "id": "color_accent", "label": "Colore accento (arco, tappeto)", "default": "#C86D51" },
+    { "type": "color", "id": "color_wall", "label": "Colore pareti", "default": "#F7F1EA" },
+    { "type": "color", "id": "color_wood", "label": "Colore legno", "default": "#E3CBA8" },
+    { "type": "color", "id": "color_plush", "label": "Colore peluche", "default": "#EADBCB" },
+    {
+      "type": "text", "id": "three_cdn_url", "label": "URL modulo Three.js (avanzato)",
+      "default": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
+      "info": "Modulo ES di Three.js. Puoi caricarlo anche come asset del tema per non dipendere dalla CDN."
+    }
+  ],
+  "presets": [ { "name": "PP · Hero 3D Cameretta" } ]
+}
+{% endschema %}

@@ -1,0 +1,15 @@
+{%- comment -%}
+  PRIMO PASSO · Logo tipografico
+  "PRIMO" [impronta piedino terracotta] "PASSO"
+  Parametri:
+  - variant: 'light' per sfondi scuri (opzionale)
+  - tag: elemento contenitore (default 'span')
+{%- endcomment -%}
+{%- liquid
+  assign tag = tag | default: 'span'
+-%}
+<{{ tag }} class="pp-logo{% if variant == 'light' %} pp-logo--light{% endif %}" aria-label="{{ shop.name | default: 'PRIMO PASSO' | escape }}">
+  <span class="pp-logo__word" aria-hidden="true">PRIMO</span>
+  {% render 'pp-footprint', class: 'pp-logo__foot' %}
+  <span class="pp-logo__word" aria-hidden="true">PASSO</span>
+</{{ tag }}>

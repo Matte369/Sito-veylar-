@@ -1,0 +1,205 @@
+{%- comment -%}
+  PRIMO PASSO · Product card con media ad arco
+  ---------------------------------------------------------------------------
+  Parametri:
+  - card_product      : oggetto product (se vuoto → card placeholder demo)
+  - index             : indice nella griglia (per stagger animazioni e demo)
+  - show_vendor       : boolean
+  - show_rating       : boolean
+  - show_secondary    : boolean (hover con seconda immagine)
+  - enable_quick_add  : boolean
+  - bestseller_tag    : tag che attiva il badge "Più Venduto" (es. 'bestseller')
+  - eco_tag           : tag che attiva il badge "Eco-friendly" (es. 'eco')
+  - force_bestseller  : boolean, mostra "Più Venduto" su tutte le card
+  - image_ratio       : aspect-ratio CSS (es. '4 / 5')
+  - section_id        : section.id della sezione chiamante (id univoci)
+
+  Recensioni: legge i metafield standard Shopify
+  `reviews.rating` (tipo rating) e `reviews.rating_count`, compatibili con
+  Shopify Product Reviews, Judge.me, Loox, Yotpo, Okendo (sync metafield).
+{%- endcomment -%}
+{%- liquid
+  assign idx = index | default: 0
+  assign ratio = image_ratio | default: '4 / 5'
+  assign bs_tag = bestseller_tag | default: 'bestseller' | downcase
+  assign e_tag = eco_tag | default: 'eco' | downcase
+-%}
+
+{%- if card_product != blank -%}
+  {%- liquid
+    assign p = card_product
+    assign tags_down = p.tags | join: '|' | downcase | split: '|'
+    assign is_bestseller = force_bestseller
+    if tags_down contains bs_tag or tags_down contains 'piu-venduto' or tags_down contains 'best-seller'
+      assign is_bestseller = true
+    endif
+    assign is_eco = false
+    if tags_down contains e_tag or tags_down contains 'eco-friendly' or tags_down contains 'organic' or tags_down contains 'biologico'
+      assign is_eco = true
+    endif
+    assign on_sale = false
+    if p.compare_at_price > p.price
+      assign on_sale = true
+      assign discount_pct = p.compare_at_price | minus: p.price | times: 100.0 | divided_by: p.compare_at_price | round
+    endif
+    assign primary_media = p.featured_media
+    assign secondary_media = nil
+    if show_secondary and p.media.size > 1
+      assign secondary_media = p.media[1]
+    endif
+    assign rating_value = p.metafields.reviews.rating.value.rating | default: 0
+    assign rating_max = p.metafields.reviews.rating.value.scale_max | default: 5
+    assign rating_count = p.metafields.reviews.rating_count | default: 0
+    assign variant_id = p.selected_or_first_available_variant.id
+  -%}
+  <article
+    class="pp-card{% if secondary_media %} pp-card--has-secondary{% endif %}"
+    data-pp-card
+    data-product-handle="{{ p.handle }}"
+  >
+    <div class="pp-card__media" style="aspect-ratio: {{ ratio }};">
+      {%- if primary_media -%}
+        {{
+          primary_media.preview_image
+          | image_url: width: 900
+          | image_tag:
+            class: 'pp-card__img pp-card__img--primary',
+            loading: 'lazy',
+            widths: '360, 540, 720, 900',
+            sizes: '(min-width: 990px) 25vw, (min-width: 750px) 50vw, 75vw',
+            alt: primary_media.alt | default: p.title
+        }}
+      {%- else -%}
+        {{ 'product-apparel-1' | placeholder_svg_tag: 'placeholder-svg pp-card__img pp-card__img--primary' }}
+      {%- endif -%}
+      {%- if secondary_media -%}
+        {{
+          secondary_media.preview_image
+          | image_url: width: 900
+          | image_tag:
+            class: 'pp-card__img pp-card__img--secondary',
+            loading: 'lazy',
+            widths: '360, 540, 720, 900',
+            sizes: '(min-width: 990px) 25vw, (min-width: 750px) 50vw, 75vw',
+            alt: ''
+        }}
+      {%- endif -%}
+
+      <div class="pp-card__badges">
+        {%- if is_bestseller -%}<span class="pp-badge pp-badge--terracotta">Più Venduto</span>{%- endif -%}
+        {%- if is_eco -%}<span class="pp-badge pp-badge--eco">{% render 'pp-icon', icon: 'leaf' %}Eco-friendly</span>{%- endif -%}
+        {%- if on_sale -%}<span class="pp-badge pp-badge--sale">-{{ discount_pct }}%</span>{%- endif -%}
+        {%- unless p.available -%}<span class="pp-badge">Esaurito</span>{%- endunless -%}
+      </div>
+
+      <button type="button" class="pp-card__wish" aria-pressed="false" aria-label="Aggiungi {{ p.title | escape }} ai preferiti" data-pp-wishlist="{{ p.handle }}">
+        {% render 'pp-icon', icon: 'heart' %}
+      </button>
+
+      {%- if enable_quick_add and p.available -%}
+        <div class="pp-card__quick">
+          {%- if p.has_only_default_variant -%}
+            <button type="button" class="pp-quick-btn" data-pp-add="{{ variant_id }}">
+              {% render 'pp-icon', icon: 'plus' %}<span>Aggiungi al carrello</span>
+            </button>
+          {%- else -%}
+            <button type="button" class="pp-quick-btn" data-pp-quick-open aria-expanded="false" aria-controls="PPVariants-{{ section_id }}-{{ p.id }}">
+              {% render 'pp-icon', icon: 'plus' %}<span>Scegli {{ p.options.first | downcase }}</span>
+            </button>
+          {%- endif -%}
+        </div>
+
+        {%- unless p.has_only_default_variant -%}
+          <div class="pp-card__variants" id="PPVariants-{{ section_id }}-{{ p.id }}" role="dialog" aria-label="Seleziona variante per {{ p.title | escape }}" data-pp-variants>
+            <div class="pp-card__variants-head">
+              <span>{{ p.options | join: ' · ' }}</span>
+              <button type="button" data-pp-quick-close aria-label="Chiudi">{% render 'pp-icon', icon: 'close' %}</button>
+            </div>
+            <div class="pp-variant-pills">
+              {%- for variant in p.variants limit: 12 -%}
+                <button
+                  type="button"
+                  class="pp-variant-pill"
+                  data-pp-add="{{ variant.id }}"
+                  {% unless variant.available %}disabled aria-disabled="true"{% endunless %}
+                  title="{{ variant.title | escape }} — {{ variant.price | money }}"
+                >{{ variant.title }}</button>
+              {%- endfor -%}
+            </div>
+          </div>
+        {%- endunless -%}
+      {%- endif -%}
+    </div>
+
+    <div class="pp-card__info">
+      {%- if show_vendor -%}<span class="pp-card__vendor">{{ p.vendor }}</span>{%- endif -%}
+      <h3 class="pp-card__title"><a href="{{ p.url }}">{{ p.title }}</a></h3>
+      {%- if show_rating and rating_value > 0 -%}
+        <div class="pp-card__rating">
+          {% render 'pp-stars', rating: rating_value, max: rating_max, uid: p.id %}
+          <span>{{ rating_value | round: 1 }} ({{ rating_count }})</span>
+        </div>
+      {%- endif -%}
+      <div class="pp-card__price">
+        <span{% if on_sale %} class="is-sale"{% endif %}>{% if p.price_varies %}da {% endif %}{{ p.price | money }}</span>
+        {%- if on_sale -%}<s>{{ p.compare_at_price | money }}</s>{%- endif -%}
+      </div>
+    </div>
+  </article>
+
+{%- else -%}
+  {%- comment -%} Card demo: visibile nell'editor quando non è selezionata una collezione {%- endcomment -%}
+  {%- liquid
+    assign demo_titles = 'Body in Cotone Organico,Copertina Mussola Nuvola,Peluche Orsetto Panna,Scarpine Primi Passi,Set Bavaglini Terracotta,Sonaglio in Legno Faggio,Sacco Nanna Avorio,Cuffietta a Coste' | split: ','
+    assign demo_prices = '2900,4900,3500,3900,2400,1900,5900,1700' | split: ','
+    assign demo_svgs = 'product-apparel-1,product-apparel-2,product-apparel-3,product-apparel-4,product-1,product-2,product-3,product-4' | split: ','
+    assign demo_ratings = '4.9,4.8,5,4.9,4.7,4.8,5,4.6' | split: ','
+    assign demo_counts = '312,198,256,421,87,143,176,64' | split: ','
+    assign demo_idx = idx | modulo: 8
+    assign demo_price = demo_prices[demo_idx] | plus: 0
+    assign demo_rating = demo_ratings[demo_idx] | plus: 0.0
+  -%}
+  <article class="pp-card" data-pp-card>
+    <div class="pp-card__media" style="aspect-ratio: {{ ratio }};">
+      {{ demo_svgs[demo_idx] | placeholder_svg_tag: 'placeholder-svg pp-card__img pp-card__img--primary' }}
+      <div class="pp-card__badges">
+        {%- if demo_idx < 2 or force_bestseller -%}<span class="pp-badge pp-badge--terracotta">Più Venduto</span>{%- endif -%}
+        {%- assign eco_mod = demo_idx | modulo: 2 -%}
+        {%- if eco_mod == 0 -%}<span class="pp-badge pp-badge--eco">{% render 'pp-icon', icon: 'leaf' %}Eco-friendly</span>{%- endif -%}
+      </div>
+      <button type="button" class="pp-card__wish" aria-pressed="false" aria-label="Aggiungi ai preferiti" data-pp-wishlist="demo-{{ demo_idx }}">
+        {% render 'pp-icon', icon: 'heart' %}
+      </button>
+      {%- if enable_quick_add -%}
+        <div class="pp-card__quick">
+          <button type="button" class="pp-quick-btn" data-pp-quick-open aria-expanded="false" aria-controls="PPVariants-{{ section_id }}-demo-{{ demo_idx }}">
+            {% render 'pp-icon', icon: 'plus' %}<span>Scegli taglia</span>
+          </button>
+        </div>
+        <div class="pp-card__variants" id="PPVariants-{{ section_id }}-demo-{{ demo_idx }}" role="dialog" aria-label="Seleziona taglia" data-pp-variants>
+          <div class="pp-card__variants-head">
+            <span>Taglia</span>
+            <button type="button" data-pp-quick-close aria-label="Chiudi">{% render 'pp-icon', icon: 'close' %}</button>
+          </div>
+          <div class="pp-variant-pills">
+            <button type="button" class="pp-variant-pill" data-pp-demo-add>0-3m</button>
+            <button type="button" class="pp-variant-pill" data-pp-demo-add>3-6m</button>
+            <button type="button" class="pp-variant-pill" data-pp-demo-add>6-12m</button>
+            <button type="button" class="pp-variant-pill" disabled>12-18m</button>
+          </div>
+        </div>
+      {%- endif -%}
+    </div>
+    <div class="pp-card__info">
+      {%- if show_vendor -%}<span class="pp-card__vendor">Primo Passo</span>{%- endif -%}
+      <h3 class="pp-card__title"><a href="{{ routes.all_products_collection_url }}">{{ demo_titles[demo_idx] }}</a></h3>
+      {%- if show_rating -%}
+        <div class="pp-card__rating">
+          {% render 'pp-stars', rating: demo_rating, uid: demo_idx %}
+          <span>{{ demo_rating }} ({{ demo_counts[demo_idx] }})</span>
+        </div>
+      {%- endif -%}
+      <div class="pp-card__price"><span>{{ demo_price | money }}</span></div>
+    </div>
+  </article>
+{%- endif -%}

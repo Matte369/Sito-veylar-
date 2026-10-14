@@ -1,0 +1,179 @@
+{%- comment -%}
+  ===========================================================================
+  PRIMO PASSO · "I Nostri Best Seller" — griglia di card ad arco
+  ---------------------------------------------------------------------------
+  - 4 colonne desktop · 2 tablet · carosello scroll-snap (o griglia) su mobile
+  - Media ad arco con hover su seconda immagine e zoom morbido
+  - Badge automatici da tag prodotto: "Più Venduto", "Eco-friendly", sconto %
+  - Quick Add (prodotti a variante singola) / pannello varianti rapido
+  - Prezzo, stelle recensioni (metafield reviews.rating), titolo
+  - Fonte: collezione oppure prodotti scelti a mano (blocchi)
+  ===========================================================================
+{%- endcomment -%}
+{% render 'pp-assets' %}
+
+{%- liquid
+  assign s = section.settings
+  assign limit = s.products_to_show
+  assign mobile_class = 'pp-products__grid--carousel'
+  if s.mobile_layout == 'grid_1'
+    assign mobile_class = 'pp-products__grid--stack'
+    assign mobile_cols = 1
+  elsif s.mobile_layout == 'grid_2'
+    assign mobile_class = 'pp-products__grid--stack'
+    assign mobile_cols = 2
+  elsif s.mobile_layout == 'carousel_2'
+    assign mobile_class = 'pp-products__grid--carousel pp-products__grid--m2'
+  endif
+  assign picked = section.blocks | where: 'type', 'product'
+-%}
+
+<section
+  id="bestseller-{{ section.id }}"
+  class="pp-scope pp-section pp-products"
+  style="--pp-section-bg: {{ s.background }};"
+  aria-labelledby="pp-products-title-{{ section.id }}"
+>
+  <div class="pp-container">
+    <header class="pp-section-head{% if s.heading_alignment == 'center' %} pp-section-head--center{% endif %}">
+      <div>
+        {%- if s.eyebrow != blank -%}<span class="pp-eyebrow pp-reveal">{{ s.eyebrow }}</span>{%- endif -%}
+        <h2 id="pp-products-title-{{ section.id }}" class="pp-section-head__title pp-reveal" style="--pp-delay: 1">{{ s.heading }}</h2>
+      </div>
+      {%- if s.text != blank -%}
+        <div class="pp-section-head__text pp-reveal" style="--pp-delay: 2">{{ s.text }}</div>
+      {%- endif -%}
+    </header>
+
+    <ul
+      class="pp-products__grid {{ mobile_class }}"
+      style="--pp-cols: {{ s.columns_desktop }};{% if mobile_cols %} --pp-cols-mobile: {{ mobile_cols }};{% endif %}"
+      role="list"
+      {% if mobile_class contains 'carousel' %}data-pp-products-carousel{% endif %}
+    >
+      {%- if picked.size > 0 -%}
+        {%- comment -%} Prodotti scelti a mano tramite blocchi {%- endcomment -%}
+        {%- for block in picked limit: limit -%}
+          <li class="pp-reveal" style="--pp-delay: {{ forloop.index0 | modulo: 4 }}" {{ block.shopify_attributes }}>
+            {%- render 'pp-product-card-arch',
+              card_product: block.settings.product,
+              index: forloop.index0,
+              show_vendor: s.show_vendor,
+              show_rating: s.show_rating,
+              show_secondary: s.show_secondary_image,
+              enable_quick_add: s.enable_quick_add,
+              bestseller_tag: s.bestseller_tag,
+              eco_tag: s.eco_tag,
+              force_bestseller: block.settings.force_bestseller,
+              image_ratio: s.image_ratio,
+              section_id: section.id
+            -%}
+          </li>
+        {%- endfor -%}
+      {%- elsif s.collection != blank and s.collection.products_count > 0 -%}
+        {%- for product in s.collection.products limit: limit -%}
+          <li class="pp-reveal" style="--pp-delay: {{ forloop.index0 | modulo: 4 }}">
+            {%- render 'pp-product-card-arch',
+              card_product: product,
+              index: forloop.index0,
+              show_vendor: s.show_vendor,
+              show_rating: s.show_rating,
+              show_secondary: s.show_secondary_image,
+              enable_quick_add: s.enable_quick_add,
+              bestseller_tag: s.bestseller_tag,
+              eco_tag: s.eco_tag,
+              force_bestseller: s.all_bestseller,
+              image_ratio: s.image_ratio,
+              section_id: section.id
+            -%}
+          </li>
+        {%- endfor -%}
+      {%- else -%}
+        {%- comment -%} Anteprima demo nell'editor (nessuna collezione selezionata) {%- endcomment -%}
+        {%- for i in (1..limit) -%}
+          <li class="pp-reveal" style="--pp-delay: {{ forloop.index0 | modulo: 4 }}">
+            {%- render 'pp-product-card-arch',
+              card_product: blank,
+              index: forloop.index0,
+              show_vendor: s.show_vendor,
+              show_rating: s.show_rating,
+              enable_quick_add: s.enable_quick_add,
+              image_ratio: s.image_ratio,
+              section_id: section.id
+            -%}
+          </li>
+        {%- endfor -%}
+      {%- endif -%}
+    </ul>
+    {%- if mobile_class contains 'carousel' -%}<div class="pp-products__dots" data-pp-dots aria-hidden="true"></div>{%- endif -%}
+
+    {%- if s.button_label != blank -%}
+      <div class="pp-products__foot pp-reveal">
+        <a class="pp-btn pp-btn--ghost" href="{% if s.collection != blank %}{{ s.collection.url }}{% else %}{{ routes.all_products_collection_url }}{% endif %}">
+          {{ s.button_label }}
+          <span class="pp-btn__icon">{% render 'pp-icon', icon: 'arrow-right' %}</span>
+        </a>
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "PP · Best Seller ad Arco",
+  "tag": "div",
+  "class": "pp-section-products",
+  "settings": [
+    { "type": "header", "content": "Intestazione" },
+    { "type": "text", "id": "eyebrow", "label": "Occhiello", "default": "Amati dalle famiglie" },
+    { "type": "inline_richtext", "id": "heading", "label": "Titolo", "default": "I nostri <em>Best Seller</em>" },
+    { "type": "richtext", "id": "text", "label": "Testo", "default": "<p>I capi e gli accessori più scelti dai genitori: tessuti certificati, cuciture piatte e dettagli pensati per la pelle delicata dei più piccoli.</p>" },
+    {
+      "type": "select", "id": "heading_alignment", "label": "Allineamento intestazione", "default": "split",
+      "options": [ { "value": "split", "label": "Titolo a sinistra, testo a destra" }, { "value": "center", "label": "Centrato" } ]
+    },
+
+    { "type": "header", "content": "Prodotti" },
+    { "type": "collection", "id": "collection", "label": "Collezione", "info": "Ignorata se aggiungi blocchi 'Prodotto' scelti a mano." },
+    { "type": "range", "id": "products_to_show", "min": 2, "max": 16, "step": 1, "label": "Numero massimo di prodotti", "default": 8 },
+    { "type": "range", "id": "columns_desktop", "min": 3, "max": 5, "step": 1, "label": "Colonne desktop", "default": 4 },
+    {
+      "type": "select", "id": "mobile_layout", "label": "Layout mobile", "default": "carousel",
+      "options": [
+        { "value": "carousel", "label": "Carosello (1 card + anteprima)" },
+        { "value": "carousel_2", "label": "Carosello (2 card)" },
+        { "value": "grid_2", "label": "Griglia 2 colonne" },
+        { "value": "grid_1", "label": "Griglia 1 colonna" }
+      ]
+    },
+    {
+      "type": "select", "id": "image_ratio", "label": "Proporzione immagine ad arco", "default": "4 / 5",
+      "options": [ { "value": "3 / 4", "label": "Verticale 3:4" }, { "value": "4 / 5", "label": "Verticale 4:5" }, { "value": "1 / 1", "label": "Quadrata" } ]
+    },
+
+    { "type": "header", "content": "Card" },
+    { "type": "checkbox", "id": "show_secondary_image", "label": "Seconda immagine all'hover", "default": true },
+    { "type": "checkbox", "id": "show_rating", "label": "Mostra stelle recensioni", "default": true, "info": "Usa i metafield standard reviews.rating / reviews.rating_count." },
+    { "type": "checkbox", "id": "show_vendor", "label": "Mostra brand", "default": false },
+    { "type": "checkbox", "id": "enable_quick_add", "label": "Quick Add / scelta varianti rapida", "default": true },
+    { "type": "text", "id": "bestseller_tag", "label": "Tag prodotto per badge 'Più Venduto'", "default": "bestseller" },
+    { "type": "text", "id": "eco_tag", "label": "Tag prodotto per badge 'Eco-friendly'", "default": "eco" },
+    { "type": "checkbox", "id": "all_bestseller", "label": "Mostra 'Più Venduto' su tutti i prodotti della collezione", "default": false },
+
+    { "type": "header", "content": "Stile" },
+    { "type": "color", "id": "background", "label": "Sfondo sezione", "default": "#FDFBF7" },
+    { "type": "text", "id": "button_label", "label": "Pulsante 'Vedi tutti'", "default": "Scopri tutta la collezione" }
+  ],
+  "blocks": [
+    {
+      "type": "product",
+      "name": "Prodotto",
+      "settings": [
+        { "type": "product", "id": "product", "label": "Prodotto" },
+        { "type": "checkbox", "id": "force_bestseller", "label": "Badge 'Più Venduto'", "default": true }
+      ]
+    }
+  ],
+  "presets": [ { "name": "PP · Best Seller ad Arco" } ]
+}
+{% endschema %}
